@@ -25,9 +25,9 @@ export type Order = {
     totalPrice: number;
 }
 
-export type Rewards = {
+export type Reward = {
     day: string;
-    name: string;
-    description: string;
-    imageUrl: string;
+    prizeName: string;
+    prizeDescription: string;
+    prizeImageUrl: string;
 }
