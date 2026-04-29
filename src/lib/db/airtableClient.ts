@@ -78,3 +78,47 @@ export function isAdmin(slackId: string): Promise<boolean> {
             });
     });
 }
+
+export function isUser(slackId: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(records && records.length > 0);
+            });
+    });
+}
+
+export function addUser(user: User): Promise<void> {
+    return new Promise((resolve, reject) => {
+        base("Users").create(
+            [
+                {
+                    fields: {
+                        slackId: user.slackId,
+                        goldBars: 0,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        address: user.address || "",
+                        email: user.email || "",
+                        phone: user.phone || "",
+                        country: user.country || "",
+                        admin: false,
+                        reviewer: false,
+                    },
+                },
+            ],
+            (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            }
+        );
+    });
+}

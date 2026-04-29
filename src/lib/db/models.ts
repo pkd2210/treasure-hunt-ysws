@@ -15,7 +15,6 @@ export type User = {
     email: string;
     phone: string;
     country: string;
-    daysCompleted: string;
     admin: boolean;
     reviewer: boolean;
 };
