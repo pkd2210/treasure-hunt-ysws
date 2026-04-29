@@ -1,5 +1,5 @@
 import Airtable from "airtable";
-import type { Item, Reward } from "./models";
+import type { Item, Reward, User } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
 
@@ -57,5 +57,24 @@ export function getRewards(): Promise<Reward[]> {
                 }
             }
         );
+    });
+}
+
+export function isAdmin(slackId: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(false);
+                    return;
+                }
+                const admin = records[0].get("admin");
+                resolve(Boolean(admin));
+            });
     });
 }

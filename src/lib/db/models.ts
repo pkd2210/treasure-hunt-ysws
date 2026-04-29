@@ -8,14 +8,16 @@ export type Item = {
 
 export type User = {
     slackId: string;
+    goldBars: number;
     firstName: string;
     lastName: string;
     address: string;
     email: string;
     phone: string;
     country: string;
-    daysCompleted: string[];
-    role: string;
+    daysCompleted: string;
+    admin: boolean;
+    reviewer: boolean;
 };
 
 export type Order = {
