@@ -11,3 +11,10 @@ export type User = {
     name: string;
     role: string;
 };
+
+export type Order = {
+    id: string;
+    slackId: string;
+    itemId: string;
+    totalPrice: number;
+}
