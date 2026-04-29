@@ -24,3 +24,10 @@ export type Order = {
     itemId: string;
     totalPrice: number;
 }
+
+export type Rewards = {
+    day: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+}
