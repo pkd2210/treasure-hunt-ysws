@@ -359,3 +359,29 @@ export async function getPhoneNumber(request: Request, slackId?: string): Promis
             });
     });
 }
+
+export async function updateGoldBars(slackId: string, newGoldBarCount: number): Promise<void> {
+    let id: string = slackId;
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve();
+                    return;
+                }
+                const recordId = records[0].id;
+                base("Users").update(recordId, { goldBars: newGoldBarCount }, (error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+    });
+}
