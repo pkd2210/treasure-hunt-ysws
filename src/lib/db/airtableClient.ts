@@ -178,15 +178,17 @@ export function getSlackId(request: Request): string | null {
     });
 }
 
-export async function getFirstName(request: Request): Promise<string | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getFirstName(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .select({ filterByFormula: `{slackId} = '${id}'` })
             .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
                 if (error) {
                     reject(error);
@@ -202,15 +204,43 @@ export async function getFirstName(request: Request): Promise<string | null> {
     });
 }
 
-export async function getGoldBars(request: Request): Promise<number | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getLastName(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const lastName = records[0].get("lastName") as string;
+                resolve(lastName);
+            });
+    });
+}
+
+export async function getGoldBars(request: Request, slackId?: string): Promise<number | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
+        return null;
+    }
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
             .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
                 if (error) {
                     reject(error);
@@ -226,15 +256,17 @@ export async function getGoldBars(request: Request): Promise<number | null> {
     });
 }
 
-export async function getHomeAddress(request: Request): Promise<string | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getHomeAddress(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .select({ filterByFormula: `{slackId} = '${id}'` })
             .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
                 if (error) {
                     reject(error);
@@ -250,16 +282,18 @@ export async function getHomeAddress(request: Request): Promise<string | null> {
     });
 }
 
-export async function getEmailAddress(request: Request): Promise<string | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getEmailAddress(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error, records: readonly Airtable.Record<AirtableFieldSet>[] = []) => {
                 if (error) {
                     reject(error);
                     return;
@@ -274,15 +308,17 @@ export async function getEmailAddress(request: Request): Promise<string | null> 
     });
 }
 
-export async function getCountry(request: Request): Promise<string | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getCountry(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .select({ filterByFormula: `{slackId} = '${id}'` })
             .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
                 if (error) {
                     reject(error);
@@ -295,18 +331,20 @@ export async function getCountry(request: Request): Promise<string | null> {
                 const country = records[0].get("country") as string;
                 resolve(country);
             });
-    })
+    });
 }
 
-export async function getPhoneNumber(request: Request): Promise<string | null> {
-    const slackId = await getSlackId(request);
-    if (!slackId) {
+export async function getPhoneNumber(request: Request, slackId?: string): Promise<string | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
         return null;
     }
-
     return new Promise((resolve, reject) => {
         base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .select({ filterByFormula: `{slackId} = '${id}'` })
             .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
                 if (error) {
                     reject(error);
@@ -319,5 +357,5 @@ export async function getPhoneNumber(request: Request): Promise<string | null> {
                 const phoneNumber = records[0].get("phone") as string;
                 resolve(phoneNumber);
             });
-    })
+    });
 }
