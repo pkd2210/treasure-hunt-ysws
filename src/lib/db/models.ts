@@ -20,10 +20,16 @@ export type User = {
 };
 
 export type Order = {
-    id: string;
+    id: number;
     slackId: string;
     itemId: string;
     totalPrice: number;
+    address: string;
+    email: string;
+    phone: string;
+    country: string;
+    isDayPrize: boolean;
+    status: "pending" | "shipped" | "delivered" | "cancelled";
 }
 
 export type Reward = {
