@@ -122,3 +122,36 @@ export function addUser(user: User): Promise<void> {
         );
     });
 }
+
+export function getSlackId(request: Request): string | null {
+    const cookieHeader = request.headers.get("cookie");
+    if (!cookieHeader) {
+        return null;
+    }
+    const cookies = cookieHeader.split(";").map(cookie => cookie.trim());
+    const accessTokenCookie = cookies.find(cookie => cookie.startsWith("access_token="));
+    if (!accessTokenCookie) {
+        return null;
+    }
+    const accessToken = accessTokenCookie.split("=")[1];
+
+    // get the user info from /api/v1/me
+    return fetch("https://auth.hackclub.com/api/v1/me", {
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Error fetching user info");
+        }
+        return response.json();
+    })
+    .then(userData => {
+        return userData.slack_id || (userData.identity && userData.identity.slack_id) || null;
+    })
+    .catch(error => {
+        console.error("Error fetching user info:", error);
+        return null;
+    });
+}
