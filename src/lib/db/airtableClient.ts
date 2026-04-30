@@ -476,3 +476,42 @@ export async function getOrders(request: Request): Promise<Order[]> {
         });
     });
 }
+
+export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
+    return new Promise((resolve, reject) => {
+        // take slackId and convert to user record id
+        base("Users").select({
+            filterByFormula: `{slackId} = '${order.slackId}'`
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                reject(new Error("User not found"));
+                return;
+            }
+            const userId = records[0].id;
+            base("Orders").create(
+                [
+                    {
+                        fields: {
+                            slackId: [userId],
+                            itemId: [order.itemId],
+                            totalPrice: order.totalPrice,
+                            isDayPrize: order.isDayPrize,
+                            status: order.status,
+                        },
+                    },
+                ],
+                (createError) => {
+                    if (createError) {
+                        reject(createError);
+                        return;
+                    }
+                    resolve();
+                }
+            );
+        });
+    });
+}
