@@ -1,7 +1,7 @@
 import AirtablePkg from "airtable";
 import type { AirtableFieldSet, AirtableRecord } from './airtable-types';
 const Airtable = AirtablePkg;
-import type { Item, Reward, User } from "./models";
+import type { Item, Order, Reward, User } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
 import type Airtable from "airtable";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
@@ -170,10 +170,10 @@ export function getSlackId(request: Request): string | null {
         return response.json();
     })
     .then(userData => {
-        return userData.slack_id || (userData.identity && userData.identity.slack_id) || null;
+        const slackId = userData.slack_id || (userData.identity && userData.identity.slack_id) || null;
+        return slackId;
     })
-    .catch(error => {
-        console.error("Error fetching user info:", error);
+    .catch(() => {
         return null;
     });
 }
@@ -427,5 +427,52 @@ export async function deleteItem(itemName: string): Promise<void> {
                     resolve();
                 });
             });
+    });
+}
+
+export async function getOrders(request: Request): Promise<Order[]> {
+    const slackId = await getSlackId(request);
+    return new Promise((resolve, reject) => {
+        base("Users").select({
+            filterByFormula: `{slackId} = '${slackId}'`
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                resolve({});
+                return;
+            }
+            const results: Record<string, Omit<Order, 'id'>> = {};
+            base("Orders").select({
+                filterByFormula: `{slackId} = '${slackId}'`
+            }).eachPage(
+                function page(records: ReadonlyArray<Airtable.Record<Airtable.FieldSet>>, fetchNextPage: () => void) {
+                    for (const record of records) {
+                        const id = record.get("id") as number;
+                        results[id] = {
+                            slackId: slackId || "",
+                            itemId: record.get("itemId") as string,
+                            totalPrice: record.get("totalPrice") as number,
+                            address: record.get("address") as string,
+                            email: record.get("email") as string,
+                            phone: record.get("phone") as string,
+                            country: record.get("country") as string,
+                            isDayPrize: record.get("isDayPrize") as boolean,
+                            status: record.get("status") as "pending" | "shipped" | "delivered" | "cancelled",
+                        };
+                    }
+                    fetchNextPage();
+                },
+                function done(error: any) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(results);
+                    }
+                }
+            );
+        });
     });
 }
