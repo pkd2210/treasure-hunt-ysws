@@ -1,13 +1,16 @@
-import Airtable from "airtable";
+import AirtablePkg from "airtable";
+import type { AirtableFieldSet, AirtableRecord } from './airtable-types';
+const Airtable = AirtablePkg;
 import type { Item, Reward, User } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
+import type Airtable from "airtable";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
 
 export function getItems(): Promise<Item[]> {
     return new Promise((resolve, reject) => {
         const results: Item[] = [];
         base("Items").select().eachPage(
-            function page(records, fetchNextPage) {
+            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
                 for (const record of records) {
                     results.push({
                         id: record.id,
@@ -19,7 +22,7 @@ export function getItems(): Promise<Item[]> {
                 }
                 fetchNextPage();
             },
-            function done(error) {
+            function done(error: any) {
                 if (error) {
                     reject(error);
                 } else {
@@ -34,7 +37,7 @@ export function getRewards(): Promise<Reward[]> {
     return new Promise((resolve, reject) => {
         const results: Reward[] = [];
         base("Rewards").select().eachPage(
-            function page(records, fetchNextPage) {
+            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
                 for (const record of records) {
                     results.push({
                         day: record.get("day") as string,
@@ -45,7 +48,7 @@ export function getRewards(): Promise<Reward[]> {
                 }
                 fetchNextPage();    
             },
-            function done(error) {
+            function done(error: any) {
                 if (error) {
                     reject(error);
                 } else {
@@ -60,11 +63,25 @@ export function getRewards(): Promise<Reward[]> {
     });
 }
 
+export function isUser(slackId: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(records && records.length > 0);
+            });
+    });
+}
+
 export function isAdmin(slackId: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         base("Users")
             .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
                 if (error) {
                     reject(error);
                     return;
@@ -79,16 +96,21 @@ export function isAdmin(slackId: string): Promise<boolean> {
     });
 }
 
-export function isUser(slackId: string): Promise<boolean> {
+export function isReviewer(slackId: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         base("Users")
             .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
                 if (error) {
                     reject(error);
                     return;
                 }
-                resolve(records && records.length > 0);
+                if (!records || records.length === 0 ) {
+                    resolve(false);
+                    return;
+                }
+                const reviewer = records[0].get("reviewer");
+                resolve(Boolean(reviewer));
             });
     });
 }
@@ -154,4 +176,148 @@ export function getSlackId(request: Request): string | null {
         console.error("Error fetching user info:", error);
         return null;
     });
+}
+
+export async function getFirstName(request: Request): Promise<string | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const firstName = records[0].get("firstName") as string;
+                resolve(firstName);
+            });
+    });
+}
+
+export async function getGoldBars(request: Request): Promise<number | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const goldBars = records[0].get("goldBars") as number;
+                resolve(goldBars);
+            });
+    });
+}
+
+export async function getHomeAddress(request: Request): Promise<string | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const address = records[0].get("address") as string;
+                resolve(address);
+            });
+    });
+}
+
+export async function getEmailAddress(request: Request): Promise<string | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const emailAddress = records[0].get("email") as string;
+                resolve(emailAddress);
+            });
+    });
+}
+
+export async function getCountry(request: Request): Promise<string | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const country = records[0].get("country") as string;
+                resolve(country);
+            });
+    })
+}
+
+export async function getPhoneNumber(request: Request): Promise<string | null> {
+    const slackId = await getSlackId(request);
+    if (!slackId) {
+        return null;
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${slackId}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const phoneNumber = records[0].get("phone") as string;
+                resolve(phoneNumber);
+            });
+    })
 }
