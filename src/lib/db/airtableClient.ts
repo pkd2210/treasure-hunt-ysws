@@ -385,3 +385,47 @@ export async function updateGoldBars(slackId: string, newGoldBarCount: number): 
             });
     });
 }
+
+export async function createItem(name: string, description: string, price: number, imageUrl: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        base("Items").create(
+            [
+                {
+                    fields: {
+                        name,
+                        description,
+                        price,
+                        imageUrl,
+                    }
+                }
+            ]
+        )
+        .then(() => resolve())
+        .catch(error => reject(error));
+    })
+}
+
+export async function deleteItem(itemName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        base("Items")
+            .select({ filterByFormula: `{name} = '${itemName}'` })
+            .firstPage((error, records) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve();
+                    return;
+                }
+                const recordId = records[0].id;
+                base("Items").destroy(recordId, (error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+    });
+}
