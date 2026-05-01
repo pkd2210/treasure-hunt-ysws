@@ -36,6 +36,4 @@ export type Order = {
 export type Reward = {
     day: string;
     prizeName: string;
-    prizeDescription: string;
-    prizeImageUrl: string;
 }

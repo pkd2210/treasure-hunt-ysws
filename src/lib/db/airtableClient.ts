@@ -34,35 +34,35 @@ export function getItems(): Promise<Item[]> {
     });
 }
 
-export function getRewards(): Promise<Reward[]> {
-    return new Promise((resolve, reject) => {
-        const results: Reward[] = [];
-        base("Rewards").select().eachPage(
-            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
-                for (const record of records) {
-                    results.push({
-                        day: record.get("day") as string,
-                        prizeName: record.get("prizeName") as string,
-                        prizeDescription: record.get("prizeDescription") as string,
-                        prizeImageUrl: record.get("prizeImageUrl") as string,
-                    })
-                }
-                fetchNextPage();    
-            },
-            function done(error: any) {
-                if (error) {
-                    reject(error);
-                } else {
-                    results.sort((a, b) => {
-                        const getStartDay = (dayStr: string) => parseInt(dayStr.split(' - ')[0], 10);
-                        return getStartDay(a.day) - getStartDay(b.day);
-                    });
-                    resolve(results);
-                }
-            }
-        );
-    });
-}
+//export function getRewards(): Promise<Reward[]> {
+//    return new Promise((resolve, reject) => {
+//        const results: Reward[] = [];
+//        base("Rewards").select().eachPage(
+//            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
+//                for (const record of records) {
+//                    results.push({
+//                        day: record.get("day") as string,
+//                        prizeName: record.get("prizeName") as string,
+//                        prizeDescription: record.get("prizeDescription") as string,
+//                        prizeImageUrl: record.get("prizeImageUrl") as string,
+//                    })
+//                }
+//                fetchNextPage();    
+//            },
+//            function done(error: any) {
+//                if (error) {
+//                    reject(error);
+//                } else {
+//                    results.sort((a, b) => {
+//                        const getStartDay = (dayStr: string) => parseInt(dayStr.split(' - ')[0], 10);
+//                        return getStartDay(a.day) - getStartDay(b.day);
+//                    });
+//                    resolve(results);
+//                }
+//            }
+//        );
+//    });
+//}
 
 export function isUser(slackId: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
@@ -552,7 +552,7 @@ export async function getItemById(itemId: string): Promise<Item | null> {
                 description: record.get("description") as string,
                 price: record.get("price") as number,
                 imageUrl: record.get("imageUrl") as string,
-                reward: record.get("reward") as string,
+                reward: record.get("reward") as boolean,
             };
             resolve(item);
             });
