@@ -1,7 +1,7 @@
 import AirtablePkg from "airtable";
 import type { AirtableFieldSet, AirtableRecord } from './airtable-types';
 const Airtable = AirtablePkg;
-import type { Item, Journey, Order, Reward, User, Submission } from "./models";
+import type { Item, Journey, Order, Reward, User, Submission, Project } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
 import type Airtable from "airtable";
 import { sendUpdateDM } from "$lib/server/slack/slackClient";
@@ -797,7 +797,7 @@ export async function updateJourneyNumber(slackId: string, newJourneyNumber: num
     });
 }
 
-export async function sendProjectToReview(slackId: string, journeyNumber: number, HackatimeProjectName: string, screenshotUrl: string, description: string, githubUsername: string, codeUrl: string, playableUrl: string): Promise<void> {
+export async function sendProjectToReview(slackId: string, journeyNumber: number, HackatimeProjectName: string, screenshotUrl: string, description: string, githubUsername: string, codeUrl: string, playableUrl: string): Promise<string> {
     if (journeyNumber > 7) {
         throw new Error("Congrats on completing the treasure hunt! Stay tuned for future adventures.");
     }
@@ -838,37 +838,123 @@ export async function sendProjectToReview(slackId: string, journeyNumber: number
         throw new Error("You have already completed this journey");
     }
 
-    await new Promise<void>((resolve, reject) => {
-            base("Submissions").create(
-                [
-                    {
-                        fields: {
-                            User: [userRecord.id],
-                            journeyNumber,
-                            "Hackatime Project name": HackatimeProjectName,
-                            status: "unreviewed",
-                            "Screenshot": [{ url: screenshotUrl }],
-                            "Description": description,
-                            "GitHub Username": githubUsername,
-                            "Code URL": codeUrl,
-                            "Playable URL": playableUrl,
-                        } as any
-                    },
-                ],
-                (error: unknown) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve();
+    const submissionId = await new Promise<string>((resolve, reject) => {
+        base("Submissions").create(
+            [
+                {
+                    fields: {
+                        User: [userRecord.id],
+                        journeyNumber,
+                        "Hackatime Project name": HackatimeProjectName,
+                        status: "unreviewed",
+                        "Screenshot": [{ url: screenshotUrl }],
+                        "Description": description,
+                        "GitHub Username": githubUsername,
+                        "Code URL": codeUrl,
+                        "Playable URL": playableUrl,
+                    } as any
+                },
+            ],
+            (error: unknown, records?: readonly Airtable.Record<Airtable.FieldSet>[]) => {
+                if (error) {
+                    reject(error);
+                    return;
                 }
-            );
-        });
-    await completeJourney(slackId, journeyNumber).catch(error => {
+                if (!records || records.length === 0) {
+                    reject(new Error('No submission record returned from Airtable'));
+                    return;
+                }
+                resolve(records[0].id);
+            }
+        );
+    });
+
+    completeJourney(slackId, journeyNumber).catch(error => {
         console.error("Error completing journey:", error);
     });
     sendUpdateDM(slackId, "Project Submitted for Review", `Your project \`\`\`${HackatimeProjectName}\`\`\` has been submitted for review! You should receive feedback within 48 hours.`).catch(error => {
         console.error("Error sending project submission DM:", error);
     });
 
+    return submissionId;
+
+}
+
+export async function createProject(slackId: string, project: Project): Promise<string> {
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        throw new Error("User not found");
+    }
+    return new Promise<string>((resolve, reject) => {
+        base("Projects").create(
+            [
+                {
+                    fields: {
+                        user: [userRecord.id],
+                        projectName: project.projectName,
+                        description: project.description,
+                        codeUrl: project.codeUrl,
+                        readmeUrl: project.readmeUrl,
+                        demoUrl: project.demoUrl,
+                        screenshot: project.screenshot,
+                        aiUsage: project.aiUsage,
+                        hackatimeProject: project.hackatimeProject,
+                        journeyNumber: project.journeyNumber,
+                    } as any
+                },
+            ],
+            (error: unknown, records?: readonly Airtable.Record<Airtable.FieldSet>[]) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    reject(new Error('No record returned from Airtable'));
+                    return;
+                }
+                resolve(records[0].id);
+            }
+        );
+    });
+}
+
+export async function submitProjectForReview(slackId: string, projectId: string): Promise<void> {
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        throw new Error("User not found");
+    }
+    return new Promise<void>((resolve, reject) => {
+        // get project records from id, and submitting it to sendProjectToReview
+        base("Projects").find(projectId, (error, record) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            const project: Project = {
+                user: record.get("user") as string,
+                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
+                projectName: record.get("projectName") as string,
+                description: record.get("description") as string,
+                codeUrl: record.get("codeUrl") as string,
+                readmeUrl: record.get("readmeUrl") as string,
+                demoUrl: record.get("demoUrl") as string,
+                screenshot: record.get("screenshot") as string,
+                aiUsage: record.get("aiUsage") as string,
+                hackatimeProject: record.get("hackatimeProject") as string,
+                journeyNumber: record.get("journeyNumber") as number,
+                submission: record.get("submission") as string | null,
+            };
+            const githubUsername = project.codeUrl.split("/").slice(-2, -1)[0];
+            sendProjectToReview(slackId, project.journeyNumber, project.projectName, project.screenshot, project.description, githubUsername, project.codeUrl, project.demoUrl).then((submissionRecordId) => {
+                base("Projects").update(record.id, { submission: [submissionRecordId] }, (updateError) => {
+                    if (updateError) {
+                        console.error("Error updating project with submission ID:", updateError);
+                    }
+                    resolve();
+                });
+            }).catch(error => {
+                reject(error);
+            });
+        });
+    });
 }

@@ -78,3 +78,18 @@ export type Submission = {
     "ZIP / Postal Code": string;
     "Birthday": string;
 }
+
+export type Project = {
+    projectName: string;
+    description: string;
+    codeUrl: string;
+    readmeUrl: string;
+    demoUrl: string;
+    screenshot: string;
+    aiUsage: string | null;
+    hackatimeProject: string;
+    user: string;
+    journeyNumber: number;
+    status: "unreviewed" | "rejected" | "approved" | null;
+    submission: string | null;
+}
