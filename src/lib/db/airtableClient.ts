@@ -18,6 +18,7 @@ export function getItems(): Promise<Item[]> {
                         description: record.get("description") as string,
                         price: record.get("price") as number,
                         imageUrl: record.get("imageUrl") as string,
+                        reward: record.get("reward") as boolean,
                     });
                 }
                 fetchNextPage();
@@ -551,6 +552,7 @@ export async function getItemById(itemId: string): Promise<Item | null> {
                 description: record.get("description") as string,
                 price: record.get("price") as number,
                 imageUrl: record.get("imageUrl") as string,
+                reward: record.get("reward") as string,
             };
             resolve(item);
             });

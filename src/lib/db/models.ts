@@ -4,6 +4,7 @@ export type Item = {
     description: string;
     price: number;
     imageUrl: string;
+    reward: boolean;
 };
 
 export type User = {
