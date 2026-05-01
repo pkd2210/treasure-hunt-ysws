@@ -85,14 +85,13 @@ export async function GET(request: Request) {
     }
 
 
-    // set them in cookies
     const response = new Response("Login successful", {
         status: 302,
         headers: {
-            "Set-Cookie": `access_token=${accessToken}; HttpOnly; Path=/; Max-Age=3600, refresh_token=${refreshToken}; HttpOnly; Path=/; Max-Age=604800`,
             "Location": "/"
         }
     });
+    response.headers.append("Set-Cookie", `access_token=${accessToken}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax`);
+    response.headers.append("Set-Cookie", `refresh_token=${refreshToken}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`);
     return response;
-    
 }

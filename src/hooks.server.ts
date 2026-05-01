@@ -29,11 +29,11 @@ export const handle: Handle = async ({ event, resolve }) => {
                     const refreshData = await refreshResponse.json();
                     const newAccessToken = refreshData.access_token;
                     const newRefreshToken = refreshData.refresh_token;
-                    const setCookie = `access_token=${newAccessToken}; Path=/; HttpOnly; SameSite=Lax, refresh_token=${newRefreshToken}; Path=/; HttpOnly; SameSite=Lax`;
                     event.request.headers.set('cookie', `access_token=${newAccessToken}; refresh_token=${newRefreshToken}`);
                     slackId = await getSlackId(event.request);
                     const response = await resolve(event);
-                    response.headers.set('set-cookie', setCookie);
+                    response.headers.append('set-cookie', `access_token=${newAccessToken}; Path=/; HttpOnly; SameSite=Lax`);
+                    response.headers.append('set-cookie', `refresh_token=${newRefreshToken}; Path=/; HttpOnly; SameSite=Lax`);
                     return response;
                 } else {
                     console.error("Error refreshing access token:", await refreshResponse.text());
@@ -46,7 +46,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
     }
 
-    if (event.url.pathname.startsWith('/api/')) {
+    if (event.url.pathname.startsWith('/api/') && event.url.pathname !== '/api/login' && !event.url.pathname.startsWith('/api/login/')) {
         if (!slackId) {
             return new Response('Not loggedin', { status: 401 });
         }
