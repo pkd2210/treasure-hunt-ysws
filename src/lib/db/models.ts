@@ -10,14 +10,21 @@ export type Item = {
 export type User = {
     slackId: string;
     goldBars: number;
+    journeyNumber: number;
     firstName: string;
     lastName: string;
-    address: string;
+    //address: string; // deoprecated
     email: string;
     phone: string;
     country: string;
     admin: boolean;
     reviewer: boolean;
+    address1: string;
+    address2: string;
+    city: string;
+    state: string;
+    zip: string;
+    birthday: string;
 };
 
 export type Order = {
@@ -33,7 +40,41 @@ export type Order = {
     status: "pending" | "shipped" | "delivered" | "cancelled";
 }
 
+// deprecated
 export type Reward = {
     day: string;
     prizeName: string;
+}
+
+export type Journey = {
+    id: number;
+    reward: string[];
+    letter: string;
+    completers: string[];
+    theme: string;
+}
+
+export type Submission = {
+    id: number;
+    journeyNumber: number;
+    "Hackatime Project name": string;
+    status: "unreviewd" | "rejected" | "approved";
+    "Optional - Override Hours Spent"?: number;
+    "Optional - Override Hours Spent Justification"?: string;
+    "Screenshot": string[];
+    "Description": string;
+    "GitHub Username": string;
+    "Code URL": string;
+    "Playable URL": string;
+    "User": string;
+    "Slack ID": string;
+    "First Name": string;
+    "Last Name": string;
+    "Email": string;
+    "Country": string;
+    "Address (Line 1)": string;
+    "State / Province": string;
+    "City": string;
+    "ZIP / Postal Code": string;
+    "Birthday": string;
 }

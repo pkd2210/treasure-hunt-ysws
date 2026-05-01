@@ -69,12 +69,18 @@ export async function GET(request: Request) {
             goldBars: 0,
             firstName: userData.first_name || (userData.identity && userData.identity.first_name) || "",
             lastName: userData.last_name || (userData.identity && userData.identity.last_name) || "",
-            address: "",
+            address1: "",
+            address2: "",
+            city: "",
+            state: "",
+            zip: "",
             email: userData.email || (userData.identity && userData.identity.primary_email) || "",
             phone: "",
             country: "",
             admin: false,
-            reviewer: false
+            reviewer: false,
+            birthday: "",
+            journeyNumber: 1,
         });
     }
 
