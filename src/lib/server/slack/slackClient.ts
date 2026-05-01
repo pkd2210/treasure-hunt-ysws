@@ -21,6 +21,8 @@ export async function sendUpdateDM(slackId: string, title: string, message: stri
         await client.client.chat.postMessage({
             channel: slackId,
             text: `New message in category ${title}: ${message}`,
+            unfurl_links: false,
+            unfurl_media: false,
             blocks: [
                 {
                     type: "header",
@@ -61,6 +63,20 @@ export async function sendUpdateDM(slackId: string, title: string, message: stri
                             value: "open_treasure_hunt",
                             url: "https://treasure.peleg2210.me",
                         },
+                    ],
+                }, 
+                {
+                    type: "context",
+                    elements: [
+                        {
+                            type: "image",
+                            image_url: "https://avatars.slack-edge.com/2025-10-10/9661249810775_dc9547e59052a3bf013f_512.png",
+                            alt_text: "peleg2210 logo",
+                        },
+                        {
+                            type: "mrkdwn",
+                            text: "If you need any help, fell free to contact me <https://hackclub.slack.com/team/U091DE0M4NB|@peleg2210>"
+                        }
                     ],
                 },
             ],

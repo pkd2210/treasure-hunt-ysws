@@ -144,6 +144,9 @@ export function addUser(user: User): Promise<void> {
                 }
             }
         );
+        sendUpdateDM(user.slackId, "Welcome to the Treasure Hunt!", `👋 | Hi ${user.firstName}! Welcome to the Treasure Hunt!\n You should complete 7 Journeys in 4 weeks!\n Each journey Will earn you a reward after 4 hours\nComplete more then 4 hours per journey? You can earn Goldbars to use in the shop!\n(8 Goldbars per hour after the 4 hours, and 10 per hours if you complete the journey within the theme).\n\nGood luck!`).catch(error => {
+            console.error("Error sending welcome DM:", error);
+        });
     });
 }
 
