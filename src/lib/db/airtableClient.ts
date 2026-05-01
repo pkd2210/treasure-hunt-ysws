@@ -479,7 +479,6 @@ export async function getOrders(request: Request): Promise<Order[]> {
 
 export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
     return new Promise((resolve, reject) => {
-        // take slackId and convert to user record id
         base("Users").select({
             filterByFormula: `{slackId} = '${order.slackId}'`
         }).firstPage((error, records) => {
@@ -492,26 +491,68 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
                 return;
             }
             const userId = records[0].id;
-            base("Orders").create(
-                [
-                    {
-                        fields: {
-                            slackId: [userId],
-                            itemId: [order.itemId],
-                            totalPrice: order.totalPrice,
-                            isDayPrize: order.isDayPrize,
-                            status: order.status,
-                        },
-                    },
-                ],
-                (createError) => {
-                    if (createError) {
-                        reject(createError);
-                        return;
-                    }
-                    resolve();
+            
+            // look up item by custom id field to get record id
+            base("Items").select({
+                filterByFormula: `{id} = '${order.itemId}'`
+            }).firstPage((itemError, itemRecords) => {
+                if (itemError) {
+                    reject(itemError);
+                    return;
                 }
-            );
+                if (!itemRecords || itemRecords.length === 0) {
+                    reject(new Error("Item not found"));
+                    return;
+                }
+                const itemRecordId = itemRecords[0].id;
+                
+                base("Orders").create(
+                    [
+                        {
+                            fields: {
+                                slackId: [userId],
+                                itemId: [itemRecordId],
+                                totalPrice: order.totalPrice,
+                                isDayPrize: order.isDayPrize,
+                                status: order.status,
+                            },
+                        },
+                    ],
+                    (createError) => {
+                        if (createError) {
+                            reject(createError);
+                            return;
+                        }
+                        resolve();
+                    }
+                );
+            });
         });
     });
+}
+
+export async function getItemById(itemId: string): Promise<Item | null> {
+    return new Promise((resolve, reject) => {
+        base("Items").select({
+            filterByFormula: `{id} = '${itemId}'`
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                resolve(null);
+                return;
+            }
+            const record = records[0];
+            const item: Item = {
+                id: record.id,
+                name: record.get("name") as string,
+                description: record.get("description") as string,
+                price: record.get("price") as number,
+                imageUrl: record.get("imageUrl") as string,
+            };
+            resolve(item);
+            });
+    })
 }
