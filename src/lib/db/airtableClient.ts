@@ -4,6 +4,7 @@ const Airtable = AirtablePkg;
 import type { Item, Order, Reward, User } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
 import type Airtable from "airtable";
+import { sendUpdateDM } from "$lib/server/slack/slackClient";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
 
 export function getItems(): Promise<Item[]> {
@@ -146,7 +147,8 @@ export function addUser(user: User): Promise<void> {
     });
 }
 
-export function getSlackId(request: Request): string | null {
+export async function getSlackId(request?: Request): Promise<string | null> {
+    if (!request) return null;
     const cookieHeader = request.headers.get("cookie");
     if (!cookieHeader) {
         return null;
@@ -158,28 +160,24 @@ export function getSlackId(request: Request): string | null {
     }
     const accessToken = accessTokenCookie.split("=")[1];
 
-    // get the user info from /api/v1/me
-    return fetch("https://auth.hackclub.com/api/v1/me", {
-        headers: {
-            "Authorization": `Bearer ${accessToken}`
-        }
-    })
-    .then(response => {
+    try {
+        const response = await fetch("https://auth.hackclub.com/api/v1/me", {
+            headers: {
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
         if (!response.ok) {
-            throw new Error("Error fetching user info");
+            return null;
         }
-        return response.json();
-    })
-    .then(userData => {
+        const userData = await response.json();
         const slackId = userData.slack_id || (userData.identity && userData.identity.slack_id) || null;
         return slackId;
-    })
-    .catch(() => {
+    } catch (_err) {
         return null;
-    });
+    }
 }
 
-export async function getFirstName(request: Request, slackId?: string): Promise<string | null> {
+export async function getFirstName(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -205,7 +203,7 @@ export async function getFirstName(request: Request, slackId?: string): Promise<
     });
 }
 
-export async function getLastName(request: Request, slackId?: string): Promise<string | null> {
+export async function getLastName(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -231,7 +229,7 @@ export async function getLastName(request: Request, slackId?: string): Promise<s
     });
 }
 
-export async function getGoldBars(request: Request, slackId?: string): Promise<number | null> {
+export async function getGoldBars(request?: Request, slackId?: string): Promise<number | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -257,7 +255,7 @@ export async function getGoldBars(request: Request, slackId?: string): Promise<n
     });
 }
 
-export async function getHomeAddress(request: Request, slackId?: string): Promise<string | null> {
+export async function getHomeAddress(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -283,7 +281,7 @@ export async function getHomeAddress(request: Request, slackId?: string): Promis
     });
 }
 
-export async function getEmailAddress(request: Request, slackId?: string): Promise<string | null> {
+export async function getEmailAddress(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -309,7 +307,7 @@ export async function getEmailAddress(request: Request, slackId?: string): Promi
     });
 }
 
-export async function getCountry(request: Request, slackId?: string): Promise<string | null> {
+export async function getCountry(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -335,7 +333,7 @@ export async function getCountry(request: Request, slackId?: string): Promise<st
     });
 }
 
-export async function getPhoneNumber(request: Request, slackId?: string): Promise<string | null> {
+export async function getPhoneNumber(request?: Request, slackId?: string): Promise<string | null> {
     let id = slackId;
     if (!id) {
         id = await getSlackId(request);
@@ -363,6 +361,13 @@ export async function getPhoneNumber(request: Request, slackId?: string): Promis
 
 export async function updateGoldBars(slackId: string, newGoldBarCount: number): Promise<void> {
     let id: string = slackId;
+    const currentGoldBars = await getGoldBars(undefined, id);
+    if (currentGoldBars === null) {
+        throw new Error("User not found");
+    }
+    if (currentGoldBars === newGoldBarCount) {
+        return;
+    }
     return new Promise((resolve, reject) => {
         base("Users")
             .select({ filterByFormula: `{slackId} = '${id}'` })
@@ -383,6 +388,15 @@ export async function updateGoldBars(slackId: string, newGoldBarCount: number): 
                     }
                     resolve();
                 });
+                if (newGoldBarCount > currentGoldBars) {
+                    sendUpdateDM(slackId, "Gold Bar Update", `✅ | You have been awarded ${newGoldBarCount - currentGoldBars} gold bars! You now have ${newGoldBarCount} gold bars.`).catch(error => {
+                        console.error("Error sending gold bar update DM:", error);
+                    });
+                } else if (newGoldBarCount < currentGoldBars) {
+                    sendUpdateDM(slackId, "Gold Bar Update", `🔻 | You have lost ${currentGoldBars - newGoldBarCount} gold bars. You now have ${newGoldBarCount} gold bars.`).catch(error => {
+                        console.error("Error sending gold bar update DM:", error);
+                    });
+                }
             });
     });
 }
@@ -506,6 +520,7 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
                     return;
                 }
                 const itemRecordId = itemRecords[0].id;
+                const itemName = itemRecords[0].get("name") as string;
                 
                 base("Orders").create(
                     [
@@ -524,6 +539,9 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
                             reject(createError);
                             return;
                         }
+                        sendUpdateDM(order.slackId, "Order Confirmation", `An order for \`\`\`${itemName}\`\`\` has been placed successfully!`).catch(error => {
+                            console.error("Error sending order confirmation DM:", error);
+                        });
                         resolve();
                     }
                 );
