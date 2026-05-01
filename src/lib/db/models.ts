@@ -58,7 +58,7 @@ export type Submission = {
     id: number;
     journeyNumber: number;
     "Hackatime Project name": string;
-    status: "unreviewd" | "rejected" | "approved";
+    status: "unreviewed" | "rejected" | "approved";
     "Optional - Override Hours Spent"?: number;
     "Optional - Override Hours Spent Justification"?: string;
     "Screenshot": string[];

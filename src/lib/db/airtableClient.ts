@@ -5,6 +5,7 @@ import type { Item, Journey, Order, Reward, User, Submission } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
 import type Airtable from "airtable";
 import { sendUpdateDM } from "$lib/server/slack/slackClient";
+import { completeJourney } from "$lib/rewards/complete";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
 
 export function getItems(): Promise<Item[]> {
@@ -679,10 +680,48 @@ export async function userSlackIdToUserRecord(slackId: string): Promise<Airtable
     });
 }
 
+function getFirstOrDefault(value: unknown): string {
+    if (Array.isArray(value) && value.length > 0) {
+        return String(value[0]);
+    }
+    return typeof value === "string" ? value : "";
+}
+
+function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>): Submission {
+    return {
+        id: record.get("id") as number,
+        journeyNumber: record.get("journeyNumber") as number,
+        "Hackatime Project name": record.get("Hackatime Project name") as string,
+        status: record.get("status") as "unreviewed" | "rejected" | "approved",
+        "Optional - Override Hours Spent": record.get("Optional - Override Hours Spent") as number | undefined,
+        "Optional - Override Hours Spent Justification": record.get("Optional - Override Hours Spent Justification") as string | undefined,
+        "Screenshot": record.get("Screenshot") as string[],
+        "Description": record.get("Description") as string,
+        "GitHub Username": record.get("GitHub Username") as string,
+        "Code URL": record.get("Code URL") as string,
+        "Playable URL": record.get("Playable URL") as string,
+        "User": getFirstOrDefault(record.get("User")),
+        "Slack ID": getFirstOrDefault(record.get("Slack ID")),
+        "First Name": getFirstOrDefault(record.get("First Name")),
+        "Last Name": getFirstOrDefault(record.get("Last Name")),
+        "Email": getFirstOrDefault(record.get("Email")),
+        "Country": getFirstOrDefault(record.get("Country")),
+        "Address (Line 1)": getFirstOrDefault(record.get("Address (Line 1)")),
+        "State / Province": getFirstOrDefault(record.get("State / Province")),
+        "City": getFirstOrDefault(record.get("City")),
+        "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
+        "Birthday": getFirstOrDefault(record.get("Birthday")),
+    };
+}
+
 export async function getSubmissionBySlackId(slackId: string): Promise<Submission | null> {
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        return null;
+    }
     return new Promise((resolve, reject) => {
         base("Submissions").select({
-            filterByFormula: `{User} = '${slackId}'`
+            filterByFormula: `{User} = '${userRecord.id}'`
         }).firstPage((error, records) => {
             if (error) {
                 reject(error);
@@ -692,36 +731,144 @@ export async function getSubmissionBySlackId(slackId: string): Promise<Submissio
                 resolve(null);
                 return;
             }
-            const record = records[0];
-            const getFirstOrDefault = (value: any): string => {
-                if (Array.isArray(value) && value.length > 0) {
-                    return value[0];
-                }
-                return typeof value === 'string' ? value : "";
-            };
-            const submission: Submission = {
-                id: record.get("id") as number,
-                journeyNumber: record.get("journeyNumber") as number,
-                "Hackatime Project name": record.get("Hackatime Project name") as string,
-                status: record.get("status") as "unreviewd" | "rejected" | "approved",
-                "Screenshot": record.get("Screenshot") as string[],
-                "Description": record.get("Description") as string,
-                "GitHub Username": record.get("GitHub Username") as string,
-                "Code URL": record.get("Code URL") as string,
-                "Playable URL": record.get("Playable URL") as string,
-                "User": getFirstOrDefault(record.get("User")),
-                "Slack ID": getFirstOrDefault(record.get("Slack ID")),
-                "First Name": getFirstOrDefault(record.get("First Name")),
-                "Last Name": getFirstOrDefault(record.get("Last Name")),
-                "Email": getFirstOrDefault(record.get("Email")),
-                "Country": getFirstOrDefault(record.get("Country")),
-                "Address (Line 1)": getFirstOrDefault(record.get("Address (Line 1)")),
-                "State / Province": getFirstOrDefault(record.get("State / Province")),
-                "City": getFirstOrDefault(record.get("City")),
-                "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
-                "Birthday": getFirstOrDefault(record.get("Birthday")),
-            };
-            resolve(submission);
+            resolve(submissionRecordToSubmission(records[0]));
         });
     });
+}
+
+export async function addToCompleters(journeyId: number, userRecordId: string): Promise<void> {
+    const recordId = await journeyIdToRecordId(journeyId);
+    if (!recordId) {
+        throw new Error("Journey not found");
+    }
+    return new Promise((resolve, reject) => {
+        base("Journeys").find(recordId, (error, record) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            const completers = record.get("completers") as string[] || [];
+            if (completers.includes(userRecordId)) {
+                resolve();
+                return;
+            }
+            completers.push(userRecordId);
+            base("Journeys").update(recordId, { completers }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                resolve();
+            });
+        });
+    });
+}
+
+export async function updateJourneyNumber(slackId: string, newJourneyNumber: number): Promise<void> {
+    let id: string = slackId;
+    const currentJourneyNumber = await getJourneyNumber(undefined, id);
+    if (currentJourneyNumber === null) {
+        throw new Error("User not found");
+    }
+    if (currentJourneyNumber === newJourneyNumber) {
+        return;
+    }
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve();
+                    return;
+                }
+                const recordId = records[0].id;
+                base("Users").update(recordId, { journeyNumber: newJourneyNumber }, (error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+    });
+}
+
+export async function sendProjectToReview(slackId: string, journeyNumber: number, HackatimeProjectName: string, screenshotUrl: string, description: string, githubUsername: string, codeUrl: string, playableUrl: string): Promise<void> {
+    if (journeyNumber > 7) {
+        throw new Error("Congrats on completing the treasure hunt! Stay tuned for future adventures.");
+    }
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        throw new Error("User not found");
+    }
+    const activeSubmissions: Submission[] = [];
+    await new Promise<void>((resolve, reject) => {
+        base("Submissions").select({
+            filterByFormula: `{User} = '${userRecord.id}'`
+        }).eachPage(
+            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
+                activeSubmissions.push(...records.map(submissionRecordToSubmission));
+                fetchNextPage();
+            },
+            function done(error: any) {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve();
+            }
+        );
+    });
+    if (activeSubmissions.some((submission) => submission.status === "rejected")) {
+        throw new Error("One of your projects was rejected. Please update your project and resubmit it before submitting another project.");
+    }
+    if (activeSubmissions.some((submission) => submission.status === "unreviewed")) {
+        throw new Error("You already have a project in review. Please wait for it to be reviewed before submitting another project.");
+    }
+    const journey = await getJourneyById(journeyNumber);
+    if (!journey) {
+        throw new Error(`Journey with number ${journeyNumber} not found`);
+    }
+    const completers = journey.completers || [];
+    if (completers.includes(userRecord.id)) {
+        throw new Error("You have already completed this journey");
+    }
+
+    await new Promise<void>((resolve, reject) => {
+            base("Submissions").create(
+                [
+                    {
+                        fields: {
+                            User: [userRecord.id],
+                            journeyNumber,
+                            "Hackatime Project name": HackatimeProjectName,
+                            status: "unreviewed",
+                            "Screenshot": [{ url: screenshotUrl }],
+                            "Description": description,
+                            "GitHub Username": githubUsername,
+                            "Code URL": codeUrl,
+                            "Playable URL": playableUrl,
+                        } as any
+                    },
+                ],
+                (error: unknown) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                }
+            );
+        });
+    await completeJourney(slackId, journeyNumber).catch(error => {
+        console.error("Error completing journey:", error);
+    });
+    sendUpdateDM(slackId, "Project Submitted for Review", `Your project \`\`\`${HackatimeProjectName}\`\`\` has been submitted for review! You should receive feedback within 48 hours.`).catch(error => {
+        console.error("Error sending project submission DM:", error);
+    });
+
 }
