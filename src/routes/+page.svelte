@@ -79,22 +79,24 @@
         </a>
     </section>
     <!--Section 2, full-screen log texture generated with CSS only-->
-    <section class="wood-pattern flex flex-col items-center py-32 justify-center px-2" id="section2">
-        <p class="text-center text-5xl md:text-7xl text-[#ffe4b5]" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 1.5px #3a1e10; text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);">
-            WHAT IS TREASURE HUNT?
-        </p>
-        <div class="w-full h-1 bg-[#3a1e10] my-8 max-w-2xl rounded-full"></div>
-        <p class="text-center text-2lg md:text-3xl text-[#ffe4b5] mt-6 max-w-4xl" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 1px #3a1e10; text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);">
-            Treasure Hunt is A YSWS (You Ship, We Ship) event, where you got 4 weeks to complete 7 Journeys,
-            Each Journey Should be a project with at least 4 Hours of work.
-            <br><br>
-            Have more then 4 Hours? Great! You  get Gold Bars You can use to buy prizes in the shop.
-        </p>
+    <section class="wood-pattern flex flex-col px-2 min-h-screen" id="section2">
+        <div class="flex flex-col items-center justify-center flex-1 py-32">
+            <p class="text-center text-5xl md:text-7xl text-[#ffe4b5]" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 1.5px #3a1e10; text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);">
+                WHAT IS TREASURE HUNT?
+            </p>
+            <div class="w-full h-1 bg-[#3a1e10] my-8 max-w-2xl rounded-full"></div>
+            <p class="text-center text-2lg md:text-3xl text-[#ffe4b5] mt-6 max-w-4xl" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 1px #3a1e10; text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);">
+                Treasure Hunt is A YSWS (You Ship, We Ship) event, where you got 4 weeks to complete 7 Journeys,
+                Each Journey Should be a project with at least 4 Hours of work.
+                <br><br>
+                Have more then 4 Hours? Great! You  get Gold Bars You can use to buy prizes in the shop.
+            </p>
+        </div>
     </section>
     <!--Section 3, full-screen log texture generated with CSS only-->
     <!--Make it 2 sections, one right, one left-->
-    <section class="relative bg-[url('/assets/heroy.webp')] bg-cover bg-center py-32 row-col" id="section3">
-        <div class="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+    <section class="relative bg-[url('/assets/heroy.webp')] bg-cover bg-center row-col" id="section3">
+        <div class="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 py-32 gap-10 items-start">
             <div class="space-y-6">
                 <h2 class="text-center text-3xl md:text-4xl text-[#ffe4b5]" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 1.2px #3a1e10; text-shadow: 0 6px 18px rgba(0,0,0,0.45);">FAQ</h2>
                 <div class="bg-black/20 rounded-lg p-6">
