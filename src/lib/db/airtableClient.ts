@@ -970,7 +970,6 @@ export async function submitProjectForReview(slackId: string, projectId: string)
             // check if project was submitted to another ysws already
             const manifestUrl = "https://manifest.hackclub.com/api/lookup?codeUrl=";
             const finalUrl = manifestUrl + encodeURIComponent(project.codeUrl);
-            console.log("Checking manifest for duplicate submission with URL:", finalUrl);
             try {
                 const response = await fetch(finalUrl);
                 const data = await response.json();

@@ -1,9 +1,14 @@
 @import 'tailwindcss';
 
 :root {
-    --background-color: #D6D1B1;
+    --background-color: #F3E1AD;
 }
 
 body {
     background-color: var(--background-color);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-timeline: scroll 3s linear;
 }
