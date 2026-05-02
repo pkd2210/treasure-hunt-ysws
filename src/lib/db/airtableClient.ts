@@ -1010,3 +1010,26 @@ export async function submitProjectForReview(slackId: string, projectId: string)
         });
     });
 }
+
+export async function getJourneyLetter(journeyId: number): Promise<string | null> {
+    if (!Number.isFinite(journeyId)) {
+        throw new Error("Invalid journey id");
+    }
+
+    return new Promise((resolve, reject) => {
+        base("Journeys").select({
+            filterByFormula: `{id} = ${journeyId}`
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                resolve(null);
+                return;
+            }
+            const letter = records[0].get("letter") as string;
+            resolve(letter);
+        });
+    });
+}
