@@ -9,6 +9,7 @@ export async function load({ fetch, parent }) {
       slackId: userData.slackId || '',
       displayName: userData.displayName || '',
       avatarUrl: userData.imageUrl || userData.avatarUrl || '',
+      goldbars: userData.goldBars || 0,
       user: userData
     };
   } catch (error) {

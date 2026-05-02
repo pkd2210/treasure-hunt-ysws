@@ -4,7 +4,7 @@
   import Button from './button.svelte';
   let isMobileOpen = $state(false);
   
-  let { slackId = '', displayName = '', avatarUrl = '' } = $props();
+  let { slackId = '', displayName = '', avatarUrl = '', goldBars = 0 } = $props();
   
   const navItems = [
     { label: 'Home', href: '/dashboard'},
@@ -55,6 +55,7 @@
       <img src={avatarUrl} alt="User Avatar" class="avatar" />
       <div class="user-info">
         <p class="username">{displayName || 'Guest'}</p>
+          <p class="gold-bars"><img src="/assets/Gold Bar.webp" alt="Gold Bar" class="gold-icon" />{goldBars}</p>
       </div>
       <a href="/api/logout" class="logout-btn" title="Logout">
         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#ffe4b5"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
@@ -65,6 +66,15 @@
 </div>
 
 <style>
+  .gold-bars {
+    font-size: 0.75rem;
+    color: #ffe4b5;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+  }
   .sidebar-container {
     position: relative;
     height: 100%;
@@ -205,6 +215,10 @@
   .user-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 
   .username {
@@ -216,27 +230,39 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
 
-    .logout-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 4px;
-      background-color: rgba(232, 187, 53, 0.1);
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
+  .gold-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+    display: inline-block;
+    flex-shrink: 0;
+    transform: scale(2.5);
+    transform-origin: center;
+  }
+  .gold-bars {
+    margin: 0;
+  }
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 4px;
+    background-color: rgba(232, 187, 53, 0.1);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
 
-    .logout-btn:hover {
-      background-color: rgba(232, 187, 53, 0.3);
-      transform: scale(1.05);
-    }
+  .logout-btn:hover {
+    background-color: rgba(232, 187, 53, 0.3);
+    transform: scale(1.05);
+  }
 
-    .logout-btn svg {
-      display: block;
-    }
+  .logout-btn svg {
+    display: block;
   }
 
   .overlay {

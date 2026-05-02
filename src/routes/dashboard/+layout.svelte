@@ -4,7 +4,7 @@
 </script>
 
 <div class="dashboard-container">
-  <SideNav slackId={data.slackId} displayName={data.displayName} avatarUrl={data.avatarUrl} />
+  <SideNav slackId={data.slackId} displayName={data.displayName} avatarUrl={data.avatarUrl} goldBars={data.goldbars} />
   <main class="dashboard-content">
     {@render children()}
   </main>
