@@ -16,10 +16,13 @@ export async function GET() {
 
     try {
         const projectId = await createProject(slackId, project as any);
-        await submitProjectForReview(slackId, projectId);
+        try {
+            await submitProjectForReview(slackId, projectId);
+        } catch (submitErr) {
+            return new Response(JSON.stringify({ ok: false, error: String(submitErr), projectId }), { headers: { "content-type": "application/json" }, status: 400 });
+        }
         return new Response(JSON.stringify({ ok: true, projectId }), { headers: { "content-type": "application/json" } });
     } catch (error) {
-        console.error("Debug create+submit error:", error);
         return new Response(JSON.stringify({ ok: false, error: String(error) }), { headers: { "content-type": "application/json" }, status: 500 });
     }
 }

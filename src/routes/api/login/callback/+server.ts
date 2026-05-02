@@ -81,6 +81,7 @@ export async function GET(request: Request) {
             reviewer: false,
             birthday: "",
             journeyNumber: 1,
+            yswsEligible: userData.ysws_eligible,
         });
     }
 

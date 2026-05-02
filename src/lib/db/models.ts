@@ -25,6 +25,7 @@ export type User = {
     state: string;
     zip: string;
     birthday: string;
+    yswsEligible: boolean;
 };
 
 export type Order = {
@@ -92,4 +93,5 @@ export type Project = {
     journeyNumber: number;
     status: "unreviewed" | "rejected" | "approved" | null;
     submission: string | null;
+    yswsEligible: boolean;
 }

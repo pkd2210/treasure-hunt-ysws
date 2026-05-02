@@ -886,7 +886,12 @@ export async function createProject(slackId: string, project: Project): Promise<
         throw new Error("User not found");
     }
     return new Promise<string>((resolve, reject) => {
-        base("Projects").create(
+        base("Projects").select({
+            filterByFormula: `AND({user} = '${userRecord.id}', {journeyNumber} = ${project.journeyNumber})`
+        }).firstPage((checkErr, existing) => {
+            if (checkErr) { reject(checkErr); return; }
+            if (existing?.length) { reject(new Error(`Already have a project for journey ${project.journeyNumber}`)); return; }
+            base("Projects").create(
             [
                 {
                     fields: {
@@ -915,6 +920,7 @@ export async function createProject(slackId: string, project: Project): Promise<
                 resolve(records[0].id);
             }
         );
+        });
     });
 }
 
@@ -943,14 +949,42 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 hackatimeProject: record.get("hackatimeProject") as string,
                 journeyNumber: record.get("journeyNumber") as number,
                 submission: record.get("submission") as string | null,
+                yswsEligible: false,
             };
+            const rawYsws = record.get("yswsEligible");
+            let normalizedYsws = false;
+            if (rawYsws === true) {
+                normalizedYsws = true;
+            } else if (Array.isArray(rawYsws) && rawYsws.length > 0) {
+                const first = rawYsws[0];
+                normalizedYsws = first === true || first === 'true' || first === 1 || first === '1';
+            } else {
+                normalizedYsws = Boolean(rawYsws);
+            }
+            project.yswsEligible = normalizedYsws;
+            if (!project.yswsEligible) {
+                reject(new Error("Project is not YSWS eligible"));
+                return;
+            }
             const githubUsername = project.codeUrl.split("/").slice(-2, -1)[0];
             sendProjectToReview(slackId, project.journeyNumber, project.projectName, project.screenshot, project.description, githubUsername, project.codeUrl, project.demoUrl).then((submissionRecordId) => {
-                base("Projects").update(record.id, { submission: [submissionRecordId] }, (updateError) => {
-                    if (updateError) {
-                        console.error("Error updating project with submission ID:", updateError);
+                base("Submissions").find(submissionRecordId, (subFetchErr, submissionRecord) => {
+                    if (subFetchErr) {
+                        console.error("Error fetching created submission record:", subFetchErr);
                     }
-                    resolve();
+                    base("Projects").update(record.id, { submission: [submissionRecordId] }, (updateError) => {
+                        if (updateError) {
+                            console.error("Error updating project with submission ID:", updateError);
+                            resolve();
+                            return;
+                        }
+                        base("Projects").find(record.id, (projErr, updatedProject) => {
+                            if (projErr) {
+                                console.error("Error fetching updated project record:", projErr);
+                            }
+                            resolve();
+                        });
+                    });
                 });
             }).catch(error => {
                 reject(error);
