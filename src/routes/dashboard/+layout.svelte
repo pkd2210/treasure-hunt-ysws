@@ -1,10 +1,10 @@
 <script>
   import SideNav from '$lib/commponents/SideNav.svelte';
-  let { children } = $props();
+  let { children, data } = $props();
 </script>
 
 <div class="dashboard-container">
-  <SideNav />
+  <SideNav slackId={data.slackId} displayName={data.displayName} avatarUrl={data.avatarUrl} />
   <main class="dashboard-content">
     {@render children()}
   </main>
