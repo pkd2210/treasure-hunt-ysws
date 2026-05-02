@@ -39,7 +39,7 @@
       >
         ✕
       </button>-->
-      <img src="/assets/Text-Logo (one line).webp" alt="Treasure Hunt Logo" class="h-20 md:h-24 object-contain" />
+      <img src="/assets/Text-logo (two lines).webp" alt="Treasure Hunt Logo" class="h-20 md:h-24 object-contain" />
     </div>
 
     <!-- Navigation Items -->

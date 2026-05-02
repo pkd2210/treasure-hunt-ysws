@@ -1,9 +1,18 @@
 <script>
     let { href, text } = $props();
 </script>
+<style>
+    .on-hover {
+        transition: transform 0.2s ease;
+        display: inline-block;
+    }
 
+    .on-hover:hover {
+        transform: scale(1.1);
+    }
+</style>
 <a href={href}>
-  <button style="background: none; border: none; cursor: pointer; padding: 0;">
+  <button class="on-hover" style="background: none; border: none; cursor: pointer; padding: 0;">
     <svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
       <!-- Parchment Paper Background with slight "burnt" jagged edges -->
       <path d="M5,10 L195,5 L190,50 L10,55 Z" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" stroke-linejoin="round" />
