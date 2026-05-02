@@ -46,8 +46,8 @@
 <main class="w-full">
     <section class="relative bg-[url('/assets/hero.png')] bg-cover bg-center min-h-screen flex flex-col">
         <header class="w-full relative z-30">
-            <div class="flex w-full items-center justify-between px-4 py-4">
-                <img alt="Hackclub banner" src="https://cdn.hackclub.com/019de4a9-41f7-7f6d-b4c7-8c549bfb001d/flag-orpheus-left.svg" class="h-10 md:h-12" />
+            <div class="flex w-full items-center justify-between py-4">
+                <a href="https://hackclub.com/"><img alt="Hackclub banner" src="https://cdn.hackclub.com/019de4a9-41f7-7f6d-b4c7-8c549bfb001d/flag-orpheus-left.svg" class="h-24 md:h-28 lg:h-32 flex-shrink-0" /></a>
                 <div class="fixed top-4 right-4 z-40 md:top-8 md:right-8">
                     {#if data.slackId}
                         <a class="btn btn-outline border-2 bg-bp-dark px-2 py-1 text-base md:px-4 md:py-2 md:text-xl" href="/dashboard"><span>DASHBOARD</span></a>
@@ -58,7 +58,7 @@
             </div>
         </header>
 
-        <div class="flex flex-1 items-center justify-center px-4 py-16">
+        <div class="flex flex-1 items-center justify-center px-4 py-14">
             <div class="max-w-3xl text-center px-4">
                 <h1 class="text-4xl md:text-3xl lg:text-4xl font-extrabold text-[#EC3750] drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]">Hack Club Presents</h1>
                 <div class="my-6">
