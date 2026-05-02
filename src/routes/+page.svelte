@@ -62,7 +62,7 @@
             <div class="max-w-3xl text-center px-4">
                 <h1 class="text-4xl md:text-3xl lg:text-4xl font-extrabold text-[#EC3750] drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]">Hack Club Presents</h1>
                 <div class="my-6">
-                    <img alt="Treasure Hunt" src="/assets/Text-logo (two lines).webp" class="mx-auto mt-4 w-48 md:w-182 drop-shadow-lg" />
+                    <img alt="Treasure Hunt" src="/assets/Text-logo (two lines).webp" class="mx-auto mt-4 w-48 md:w-182 drop-shadow-lg sm:w-150" />
                 </div>
                 <p class="text-[#FFB400] text-2xl sm:text-3xl" style="font-family: 'Luckiest Guy', cursive; -webkit-text-stroke: 2px #48221a;">Complete Journeys and Win Awesome Prizes!</p>
             </div>

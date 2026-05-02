@@ -1,4 +1,4 @@
-import { getFirstName, getLastName, getSlackId, getGoldBars, isAdmin, isReviewer, getHomeAddress, getEmailAddress, getCountry, getPhoneNumber } from "$lib/db/airtableClient";
+import { getFirstName, getLastName, getSlackId, getGoldBars, isAdmin, isReviewer, getAddress as getHomeAddress, getEmailAddress, getCountry, getPhoneNumber } from "$lib/db/airtableClient";
 
 export async function GET({ request }: { request: Request }) {
     const slackId = await getSlackId(request);
