@@ -5,7 +5,7 @@ export async function GET() {
     const project = {
         projectName: `Debug Project ${Date.now()}`,
         description: "Automated debug project",
-        codeUrl: "https://github.com/hackclub/example",
+        codeUrl: "https://github.com/hackclub/trailit-ysw",
         readmeUrl: "https://example.com/readme",
         demoUrl: "https://example.com",
         screenshot: "https://cdn.hackclub.com/placeholder.png",

@@ -931,7 +931,7 @@ export async function submitProjectForReview(slackId: string, projectId: string)
     }
     return new Promise<void>((resolve, reject) => {
         // get project records from id, and submitting it to sendProjectToReview
-        base("Projects").find(projectId, (error, record) => {
+        base("Projects").find(projectId, async (error, record) => {
             if (error) {
                 reject(error);
                 return;
@@ -966,6 +966,25 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 reject(new Error("Project is not YSWS eligible"));
                 return;
             }
+
+            // check if project was submitted to another ysws already
+            const manifestUrl = "https://manifest.hackclub.com/api/lookup?codeUrl=";
+            const finalUrl = manifestUrl + encodeURIComponent(project.codeUrl);
+            console.log("Checking manifest for duplicate submission with URL:", finalUrl);
+            try {
+                const response = await fetch(finalUrl);
+                const data = await response.json();
+                if (Array.isArray(data.submissions) && data.submissions.length > 0) {
+                    reject(new Error("This project has already been submitted for some YSWS"));
+                    return;
+                }
+            } catch (err) {
+                console.error("Error checking manifest for duplicate submission:", err);
+                reject(new Error("Error checking project submission status. Please try again later."));
+                return;
+            }
+
+
             const githubUsername = project.codeUrl.split("/").slice(-2, -1)[0];
             sendProjectToReview(slackId, project.journeyNumber, project.projectName, project.screenshot, project.description, githubUsername, project.codeUrl, project.demoUrl).then((submissionRecordId) => {
                 base("Submissions").find(submissionRecordId, (subFetchErr, submissionRecord) => {
