@@ -55,7 +55,7 @@
       <img src={avatarUrl} alt="User Avatar" class="avatar" />
       <div class="user-info">
         <p class="username">{displayName || 'Guest'}</p>
-          <p class="gold-bars"><img src="/assets/Gold Bar.webp" alt="Gold Bar" class="gold-icon" />{goldBars}</p>
+          <p class="gold-bars"><img draggable="false" src="/assets/Gold Bar.webp" alt="Gold Bar" class="gold-icon" />{goldBars}</p>
       </div>
       <a href="/api/logout" class="logout-btn" title="Logout">
         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#ffe4b5"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
