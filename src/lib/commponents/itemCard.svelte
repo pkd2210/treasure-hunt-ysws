@@ -81,7 +81,8 @@
     <!-- Price Tag: Gold Bar Yellow -->
     <g transform="translate(190, 335)">
       <path d="M0,0 L80,0 L90,15 L80,30 L0,30 Z" fill="#FFB400" stroke="#1B2D48" stroke-width="2" />
-      <text x="40" y="20" text-anchor="middle" font-size="16" font-weight="bold" fill="#1B2D48">{itemData.price} GB</text>
+      <text x="34" y="20" text-anchor="middle" font-size="16" font-weight="bold" fill="#1B2D48">{itemData.price}</text>
+      <image href="/assets/Gold%20Bar.webp" x="30" y="-18" width="64" height="64" preserveAspectRatio="xMidYMid meet" />
     </g>
 
     <!-- Buy Button: Interaction Area -->
