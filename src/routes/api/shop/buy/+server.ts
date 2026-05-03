@@ -14,7 +14,9 @@ export async function GET({ request }: { request: Request }) {
     if (!item) {
         return new Response("Item not found", { status: 404 });
     }
-
+    if (item.reward === true) {
+        return new Response("Cannot purchase reward items", { status: 400 });
+    }
     const price = item.price;
     const totalPrice = price * parseInt(amount, 10);
 

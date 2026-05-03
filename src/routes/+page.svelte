@@ -1,5 +1,13 @@
 <script lang=ts>
     let { data } = $props();
+    import { preloadData } from '$app/navigation';
+    import { onMount } from 'svelte';
+    
+    onMount(() => {
+        if (data.slackId) {
+            preloadData('/dashboard');
+        }
+    });
 </script>
 <style>
     @keyframes jump {

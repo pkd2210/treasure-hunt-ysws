@@ -1,11 +1,11 @@
 import { getItems } from '$lib/db/airtableClient';
 import type { Item } from '$lib/db/models';
-let items: Item[] = []
 
-items = await getItems();
+export async function GET() {
+    const items: Item[] = await getItems();
+    const filteredItems = items.filter((item) => item.reward !== true);
 
-export function GET() {
-    return new Response(JSON.stringify(items), {
+    return new Response(JSON.stringify(filteredItems), {
         headers: { 'Content-Type': 'application/json' },
     });
 }

@@ -15,7 +15,8 @@ export function getItems(): Promise<Item[]> {
             function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
                 for (const record of records) {
                     results.push({
-                        id: record.id,
+                        recId: record.id,
+                        id: record.get("id") as number,
                         name: record.get("name") as string,
                         description: record.get("description") as string,
                         price: record.get("price") as number,

@@ -13,11 +13,13 @@
 <style>
   .dashboard-container {
     display: flex;
-    height: 100%;
+    min-height: 100vh;
   }
 
   .dashboard-content {
     flex: 1;
+    min-width: 0;
+    width: 100%;
     overflow-y: auto;
     padding: 2rem;
   }
