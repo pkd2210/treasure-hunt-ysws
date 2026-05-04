@@ -20,15 +20,15 @@
 
         <!-- Red "Q" for Question Circle -->
         <circle cx="45" cy="50" r="20" fill="#EC3750" />
-        <text x="45" y="60" text-anchor="middle" font-family="monospace" font-weight="900" font-size="28" fill="#F3E1AD">?</text>
+        <text x="45" y="60" text-anchor="middle" font-family="'Luckiest Guy', cursive" font-weight="900" font-size="28" fill="#F3E1AD">?</text>
 
         <!-- Question Text Area -->
-        <text x="85" y="45" font-family="sans-serif" font-weight="800" font-size="18" fill="#1B2D48">
+        <text x="85" y="45" font-family="'Luckiest Guy', cursive" font-weight="800" font-size="18" fill="#1B2D48">
             {question}
         </text>
 
         <!-- Answer Content -->
-        <text x="85" y="75" font-family="sans-serif" font-size="14" fill="#1B2D48" opacity="0.7">
+        <text x="85" y="75" font-family="'Luckiest Guy', cursive" font-size="14" fill="#1B2D48" opacity="0.7">
             {#each content as line, i}
                 <tspan x="85" dy={i === 0 ? 0 : 20}>{line}</tspan>
             {/each}
