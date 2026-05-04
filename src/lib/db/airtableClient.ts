@@ -17,31 +17,72 @@ async function getUserRecords(slackId?: string, request?: Request): Promise<Airt
         return null;
     }
     
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                resolve(records[0]);
-            })
-    })
+    //return new Promise((resolve, reject) => {
+    //    base("Users")
+    //        .select({ filterByFormula: `{slackId} = '${id}'` })
+    //        .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+    //            if (error) {
+    //                reject(error);
+    //                return;
+    //            }
+    //            if (!records || records.length === 0) {
+    //                resolve(null);
+    //                return;
+    //            }
+    //            resolve(records[0]);
+    //        })
+    //})
+
+    // return a template record for testing without airtable access
+    // keep this as a simple mock object but cast it to the AirtableRecord type
+    // DON'T DELETE THE COMMENTS
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return Promise.resolve({
+        id: "rec123",
+        get: (fieldName: string) => {
+            const mockData: Record<string, any> = {
+                slackId: "U091DE0M4NB",
+                goldBars: 2500,
+                firstName: "Peleg",
+                lastName: "User",
+                address1: "123 Test St",
+                address2: "SECEND ADDRESS",
+                city: "Testville",
+                state: "TS",
+                zip: "12345",
+                email: "pkd2210@gmail.com",
+                phone: "555-1234",
+                country: "Testland",
+                admin: true,
+                reviewer: true,
+                journeyNumber: 1,
+            };
+            // return undefined for unknown fields to mirror Airtable behavior
+            return mockData.hasOwnProperty(fieldName) ? mockData[fieldName] : undefined;
+        }
+    } as unknown as AirtableRecord<AirtableFieldSet>);
 }
 
 // User Get functions
 
 export async function getSlackId(request?: Request): Promise<string> {
-        const user = await getUserRecords(undefined, request);
-        if (!user) {
-            return "";
-        }
-        return user.get("slackId") as string;
+    if (!request) return "";
+    const cookieHeader = request.headers.get("cookie") || "";
+    const accessToken = cookieHeader.includes("access_token=")
+        ? cookieHeader.split("access_token=")[1].split(";")[0]
+        : undefined;
+    if (!accessToken) return "";
+    try {
+        const resp = await fetch("https://auth.hackclub.com/api/v1/me", {
+            headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+        if (!resp.ok) return "";
+        const data = await resp.json();
+        return data.slack_id || (data.identity && data.identity.slack_id) || "";
+    } catch (err) {
+        console.error("Error fetching slack id from auth API:", err);
+        return "";
+    }
 }
 
 export async function getFirstName(request?: Request, slackId?: string): Promise<string> {
