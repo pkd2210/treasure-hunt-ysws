@@ -11,7 +11,7 @@
         transform: scale(1.1);
     }
 </style>
-<a href={href}>
+<a href={href} alt={text} data-sveltekit-preload-data="hover">
   <button class="on-hover" style="background: none; border: none; cursor: pointer; padding: 0;">
     <svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
       <!-- Parchment Paper Background with slight "burnt" jagged edges -->
