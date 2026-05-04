@@ -9,7 +9,7 @@
 	let svgViewHeight = $derived(Math.max(120, 75 + (content.length * 20) + (links.length * 20) + 20));
 </script>
 
-<div style="max-width: 500px; filter: drop-shadow(4px 4px 0px rgba(27, 45, 72, 0.2));">
+<div class="faq-card-shell">
     <svg width="500" height={svgViewHeight} viewBox={`0 0 500 ${svgViewHeight}`} xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
         <!-- Torn Paper Scrap Background -->
         <path d={`M10,15 L485,5 L495,${svgViewHeight - 15} L15,${svgViewHeight - 5} L5,60 Z`}
@@ -38,7 +38,15 @@
                     dy="20"
                     fill="#EC3750"
                     style="cursor: pointer; text-decoration: underline;"
-                    on:click={() => window.open(link.url, '_blank')}
+                    role="link"
+                    tabindex="0"
+                    onclick={() => window.open(link.url, '_blank')}
+                    onkeydown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            window.open(link.url, '_blank');
+                        }
+                    }}
                 >
                     {link.text}
                 </tspan>
@@ -55,4 +63,21 @@
 </div>
 
 <style>
+    .faq-card-shell {
+        width: min(500px, 100%);
+        max-width: 100%;
+        filter: drop-shadow(4px 4px 0px rgba(27, 45, 72, 0.2));
+    }
+
+    .faq-card-shell svg {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    @media (max-width: 640px) {
+        .faq-card-shell {
+            width: 100%;
+        }
+    }
 </style>

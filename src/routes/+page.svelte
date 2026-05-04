@@ -56,13 +56,13 @@
     <section class="relative bg-[url('/assets/hero.png')] bg-cover bg-center min-h-screen flex flex-col">
         <header class="w-full relative z-30">
             <div class="flex w-full items-center justify-between py-4">
-                <a href="https://hackclub.com/"><img alt="Hackclub banner" src="https://cdn.hackclub.com/019de4a9-41f7-7f6d-b4c7-8c549bfb001d/flag-orpheus-left.svg" class="h-24 md:h-28 lg:h-32 flex-shrink-0" /></a>
+                <a href="https://hackclub.com/"><img alt="Hackclub banner" src="https://cdn.hackclub.com/019de4a9-41f7-7f6d-b4c7-8c549bfb001d/flag-orpheus-left.svg" class="h-24 md:h-28 lg:h-32 shrink-0" /></a>
                 {#if data.slackId}
                     <a href="/dashboard" style="position: fixed; top: 20px; right: 20px; z-index: 40; filter: drop-shadow(3px 3px 0px rgba(27, 45, 72, 0.2)); text-decoration: none;">
                         <button style="background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s ease-in-out;" 
-                                on:mousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                                on:mouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-                            <svg width="180" height="68" viewBox="0 0 120 45" xmlns="http://www.w3.org/2000/svg">
+                            onmousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                            onmouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                            <svg width="180" height="68" viewBox="0 0 120 45" xmlns="http://www.w3.org/2000/svg" style="width: clamp(120px, 35vw, 180px); height: auto; display: block;">
                                 <!-- Wobbly Button Shape (Hand-drawn look) -->
                                 <path d="M5,8 Q10,2 30,5 L100,2 Q115,5 112,20 L118,35 Q110,43 90,40 L20,43 Q5,40 8,25 Z" 
                                       fill="#FFB400" 
@@ -90,9 +90,9 @@
                 {:else}
                     <a href="/api/login" style="position: fixed; top: 20px; right: 20px; z-index: 40; filter: drop-shadow(3px 3px 0px rgba(27, 45, 72, 0.2)); text-decoration: none;">
                         <button style="background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s ease;"
-                                on:mousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                                on:mouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-                            <svg width="270" height="68" viewBox="0 0 180 45" xmlns="http://www.w3.org/2000/svg">
+                            onmousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                            onmouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                            <svg width="270" height="68" viewBox="0 0 180 45" xmlns="http://www.w3.org/2000/svg" style="width: clamp(180px, 55vw, 270px); height: auto; display: block;">
                                 <!-- Combined Wobbly Button Shape (Wider to fit text) -->
                                 <path d="M5,8 Q12,2 45,5 L160,2 Q175,5 172,20 L178,35 Q165,43 130,40 L30,43 Q5,40 8,25 Z" 
                                       fill="#FFB400" 
