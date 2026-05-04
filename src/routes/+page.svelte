@@ -57,13 +57,67 @@
         <header class="w-full relative z-30">
             <div class="flex w-full items-center justify-between py-4">
                 <a href="https://hackclub.com/"><img alt="Hackclub banner" src="https://cdn.hackclub.com/019de4a9-41f7-7f6d-b4c7-8c549bfb001d/flag-orpheus-left.svg" class="h-24 md:h-28 lg:h-32 flex-shrink-0" /></a>
-                <div class="fixed top-4 right-4 z-40 md:top-8 md:right-8">
-                    {#if data.slackId}
-                        <a class="btn btn-outline border-2 bg-bp-dark px-2 py-1 text-base md:px-4 md:py-2 md:text-xl" href="/dashboard"><span>DASHBOARD</span></a>
-                    {:else}
-                        <a class="btn btn-outline border-2 bg-bp-dark px-2 py-1 text-base md:px-4 md:py-2 md:text-xl" href="/api/login"><span>LOGIN & SIGNIN</span></a>
-                    {/if}
-                </div>
+                {#if data.slackId}
+                    <a href="/dashboard" style="position: fixed; top: 20px; right: 20px; z-index: 40; filter: drop-shadow(3px 3px 0px rgba(27, 45, 72, 0.2)); text-decoration: none;">
+                        <button style="background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s ease-in-out;" 
+                                on:mousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                                on:mouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                            <svg width="180" height="68" viewBox="0 0 120 45" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Wobbly Button Shape (Hand-drawn look) -->
+                                <path d="M5,8 Q10,2 30,5 L100,2 Q115,5 112,20 L118,35 Q110,43 90,40 L20,43 Q5,40 8,25 Z" 
+                                      fill="#FFB400" 
+                                      stroke="#1B2D48" 
+                                      stroke-width="3" 
+                                      stroke-linejoin="round" />
+                                
+                                <!-- Button Text -->
+                                <text x="50%" y="55%" 
+                                      dominant-baseline="middle" 
+                                      text-anchor="middle" 
+                                      font-family="'Luckiest Guy', cursive" 
+                                      font-weight="900" 
+                                      font-size="16" 
+                                      fill="#1B2D48" 
+                                      style="text-transform: uppercase; letter-spacing: 0.5px;">
+                                  DASHBOARD
+                                </text>
+
+                                <!-- Small Shine Detail -->
+                                <path d="M15,12 Q25,8 40,10" fill="none" stroke="white" stroke-width="2" opacity="0.4" />
+                            </svg>
+                        </button>
+                    </a>
+                {:else}
+                    <a href="/api/login" style="position: fixed; top: 20px; right: 20px; z-index: 40; filter: drop-shadow(3px 3px 0px rgba(27, 45, 72, 0.2)); text-decoration: none;">
+                        <button style="background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s ease;"
+                                on:mousedown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                                on:mouseup={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                            <svg width="270" height="68" viewBox="0 0 180 45" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Combined Wobbly Button Shape (Wider to fit text) -->
+                                <path d="M5,8 Q12,2 45,5 L160,2 Q175,5 172,20 L178,35 Q165,43 130,40 L30,43 Q5,40 8,25 Z" 
+                                      fill="#FFB400" 
+                                      stroke="#1B2D48" 
+                                      stroke-width="3" 
+                                      stroke-linejoin="round" />
+                                
+                                <!-- Combined Text -->
+                                <text x="50%" y="55%" 
+                                      dominant-baseline="middle" 
+                                      text-anchor="middle" 
+                                      font-family="'Luckiest Guy', cursive" 
+                                      font-weight="900" 
+                                      font-size="16" 
+                                      fill="#1B2D48" 
+                                      style="text-transform: uppercase; letter-spacing: 0.5px;">
+                                  LOGIN & REGISTER
+                                </text>
+
+                                <!-- Shine Detail -->
+                                <path d="M15,12 Q35,8 60,10" fill="none" stroke="white" stroke-width="2" opacity="0.4" />
+                            </svg>
+                        </button>
+                    </a>
+                {/if}
             </div>
         </header>
 
@@ -101,6 +155,15 @@
                 Have more then 4 Hours? Great! You  get Gold Bars You can use to buy prizes in the shop.
             </p>
         </div>
+        <a href="#section3" title="Jump to section 3">
+            <div class="flex  w-full justify-center pb-8">
+                <div class="rounded-full bg-black/45 p-2 animate-jump">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="28px" fill="#ffffff" aria-label="Scroll down">
+                        <path d="M480-345 240-585l56-56 184 183 184-183 56 56-240 240Z" />
+                    </svg>
+                </div>
+            </div>
+        </a>
     </section>
     <!--Section 3, full-screen log texture generated with CSS only-->
     <!--Make it 2 sections, one right, one left-->
