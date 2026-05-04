@@ -156,32 +156,62 @@ export async function getJourneyNumber(request?: Request, slackId?: string): Pro
 }
 
 export function getItems(): Promise<Item[]> {
-    return new Promise((resolve, reject) => {
-        const results: Item[] = [];
-        base("Items").select().eachPage(
-            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
-                for (const record of records) {
-                    results.push({
-                        recId: record.id,
-                        id: record.get("id") as string,
-                        name: record.get("name") as string,
-                        description: record.get("description") as string,
-                        price: record.get("price") as number,
-                        imageUrl: record.get("imageUrl") as string,
-                        reward: record.get("reward") as boolean,
-                    });
-                }
-                fetchNextPage();
-            },
-            function done(error: any) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            }
-        );
-    });
+//    return new Promise((resolve, reject) => {
+//        const results: Item[] = [];
+//        base("Items").select().eachPage(
+//            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
+//                for (const record of records) {
+//                    results.push({
+//                        recId: record.id,
+//                        id: record.get("id") as string,
+//                        name: record.get("name") as string,
+//                        description: record.get("description") as string,
+//                        price: record.get("price") as number,
+//                        imageUrl: record.get("imageUrl") as string,
+//                        reward: record.get("reward") as boolean,
+//                    });
+//                }
+//                fetchNextPage();
+//            },
+//           function done(error: any) {
+//                if (error) {
+//                    reject(error);
+//                } else {
+//                    resolve(results);
+//                }
+//            }
+//        );
+//    });
+    // return mock items for testing without airtable access
+    return Promise.resolve([
+        {
+            recId: "rec123",
+            id: "item123",
+            name: "Test Item",
+            description: "This is a test item.",
+            price: 100,
+            imageUrl: "https://cdn.hackclub.com/019d96d5-93a7-730d-84bf-1678f0f8b295/4apvimfttbw80qm0lp616ofwez6put538415.avif",
+            reward: false,
+        },
+        {
+            recId: "rec1233",
+            id: "item1233",
+            name: "Test Item 2",
+            description: "This is another test item.",
+            price: 100,
+            imageUrl: "https://cdn.hackclub.com/019d96d5-93a7-730d-84bf-1678f0f8b295/4apvimfttbw80qm0lp616ofwez6put538415.avif",
+            reward: false,
+        },
+        {
+            recId: "rec456",
+            id: "item456",
+            name: "Test Reward",
+            description: "This is a test reward.",
+            price: 0,
+            imageUrl: "https://cdn.hackclub.com/019d96d5-93a7-730d-84bf-1678f0f8b295/4apvimfttbw80qm0lp616ofwez6put538415.avif",
+            reward: true,
+        }
+    ]);
 }
 
 // Is user functions
