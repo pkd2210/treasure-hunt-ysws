@@ -18,7 +18,8 @@
     "src/**/*.svelte",
     "test/**/*.ts",
     "test/**/*.js",
-    "test/**/*.svelte"
+    "test/**/*.svelte",
+    ".svelte-kit/ambient.d.ts"
   ],
   "exclude": [
     "node_modules",

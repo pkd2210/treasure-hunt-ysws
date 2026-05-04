@@ -1,4 +1,5 @@
 export type Item = {
+    recId: string;
     id: string;
     name: string;
     description: string;

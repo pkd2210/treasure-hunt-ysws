@@ -3,10 +3,116 @@ import type { AirtableFieldSet, AirtableRecord } from './airtable-types';
 const Airtable = AirtablePkg;
 import type { Item, Journey, Order, Reward, User, Submission, Project } from "./models";
 import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
-import type Airtable from "airtable";
 import { sendUpdateDM } from "$lib/server/slack/slackClient";
 import { completeJourney } from "$lib/rewards/complete";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
+
+// General get records
+async function getUserRecords(slackId?: string, request?: Request): Promise<AirtableRecord<AirtableFieldSet> | null> {
+    let id = slackId;
+    if (!id) {
+        id = await getSlackId(request);
+    }
+    if (!id) {
+        return null;
+    }
+    
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                resolve(records[0]);
+            })
+    })
+}
+
+// User Get functions
+
+export async function getSlackId(request?: Request): Promise<string> {
+        const user = await getUserRecords(undefined, request);
+        if (!user) {
+            return "";
+        }
+        return user.get("slackId") as string;
+}
+
+export async function getFirstName(request?: Request, slackId?: string): Promise<string> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return "";
+    }
+    return user.get("firstName") as string;
+}
+
+export async function getLastName(request?: Request, slackId?: string): Promise<string> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return "";
+    }
+    return user.get("lastName") as string;
+}
+
+export async function getGoldBars(request?: Request, slackId?: string): Promise<number> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return 0;
+    }
+    return user.get("goldBars") as number;
+}
+
+export async function getAddress(request?: Request, slackId?: string): Promise<{ address1: string; address2: string; city: string; state: string; zip: string }> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return { address1: "", address2: "", city: "", state: "", zip: "" };
+    }
+    return {
+        address1: user.get("address1") as string,
+        address2: user.get("address2") as string,
+        city: user.get("city") as string,
+        state: user.get("state") as string,
+        zip: user.get("zip") as string
+    };
+}
+
+export async function getEmailAddress(request?: Request, slackId?: string): Promise<string> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return "";
+    }
+    return user.get("email") as string;
+}
+
+export async function getCountry(request?: Request, slackId?: string): Promise<string> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return "";
+    }
+    return user.get("country") as string;
+}
+
+export async function getPhoneNumber(request?: Request, slackId?: string): Promise<string> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return "";
+    }
+    return user.get("phone") as string;
+}
+
+export async function getJourneyNumber(request?: Request, slackId?: string): Promise<number> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) {
+        return 0;
+    }
+    return user.get("journeyNumber") as number;
+}
 
 export function getItems(): Promise<Item[]> {
     return new Promise((resolve, reject) => {
@@ -16,7 +122,7 @@ export function getItems(): Promise<Item[]> {
                 for (const record of records) {
                     results.push({
                         recId: record.id,
-                        id: record.get("id") as number,
+                        id: record.get("id") as string,
                         name: record.get("name") as string,
                         description: record.get("description") as string,
                         price: record.get("price") as number,
@@ -37,88 +143,26 @@ export function getItems(): Promise<Item[]> {
     });
 }
 
-//export function getRewards(): Promise<Reward[]> {
-//    return new Promise((resolve, reject) => {
-//        const results: Reward[] = [];
-//        base("Rewards").select().eachPage(
-//            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
-//                for (const record of records) {
-//                    results.push({
-//                        day: record.get("day") as string,
-//                        prizeName: record.get("prizeName") as string,
-//                        prizeDescription: record.get("prizeDescription") as string,
-//                        prizeImageUrl: record.get("prizeImageUrl") as string,
-//                    })
-//                }
-//                fetchNextPage();    
-//            },
-//            function done(error: any) {
-//                if (error) {
-//                    reject(error);
-//                } else {
-//                    results.sort((a, b) => {
-//                        const getStartDay = (dayStr: string) => parseInt(dayStr.split(' - ')[0], 10);
-//                        return getStartDay(a.day) - getStartDay(b.day);
-//                    });
-//                    resolve(results);
-//                }
-//            }
-//        );
-//    });
-//}
-
-export function isUser(slackId: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(records && records.length > 0);
-            });
-    });
+// Is user functions
+export async function isUser(slackId?: string, request?: Request): Promise<boolean> {
+    const user = await getUserRecords(slackId, request);
+    return user != null;
 }
 
-export function isAdmin(slackId: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(false);
-                    return;
-                }
-                const admin = records[0].get("admin");
-                resolve(Boolean(admin));
-            });
-    });
+export async function isAdmin(slackId?: string, request?: Request): Promise<boolean> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) return false;
+    return Boolean(user.get("admin"));
+
 }
 
-export function isReviewer(slackId: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${slackId}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0 ) {
-                    resolve(false);
-                    return;
-                }
-                const reviewer = records[0].get("reviewer");
-                resolve(Boolean(reviewer));
-            });
-    });
+export async function isReviewer(slackId?: string, request?: Request): Promise<boolean> {
+    const user = await getUserRecords(slackId, request);
+    if (!user) return false;
+    return Boolean(user.get("reviewer"));
 }
 
+// User Management functions
 export function addUser(user: User): Promise<void> {
     return new Promise((resolve, reject) => {
         base("Users").create(
@@ -158,248 +202,6 @@ export function addUser(user: User): Promise<void> {
     });
 }
 
-export async function getSlackId(request?: Request): Promise<string | null> {
-    if (!request) return null;
-    const cookieHeader = request.headers.get("cookie");
-    if (!cookieHeader) {
-        return null;
-    }
-    const cookies = cookieHeader.split(";").map(cookie => cookie.trim());
-    const accessTokenCookie = cookies.find(cookie => cookie.startsWith("access_token="));
-    if (!accessTokenCookie) {
-        return null;
-    }
-    const accessToken = accessTokenCookie.split("=")[1];
-
-    try {
-        const response = await fetch("https://auth.hackclub.com/api/v1/me", {
-            headers: {
-                "Authorization": `Bearer ${accessToken}`
-            }
-        });
-        if (!response.ok) {
-            return null;
-        }
-        const userData = await response.json();
-        const slackId = userData.slack_id || (userData.identity && userData.identity.slack_id) || null;
-        return slackId;
-    } catch (_err) {
-        return null;
-    }
-}
-
-export async function getFirstName(request?: Request, slackId?: string): Promise<string | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const firstName = records[0].get("firstName") as string;
-                resolve(firstName);
-            });
-    });
-}
-
-export async function getLastName(request?: Request, slackId?: string): Promise<string | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const lastName = records[0].get("lastName") as string;
-                resolve(lastName);
-            });
-    });
-}
-
-export async function getGoldBars(request?: Request, slackId?: string): Promise<number | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const goldBars = records[0].get("goldBars") as number;
-                resolve(goldBars);
-            });
-    });
-}
-
-export async function getAddress(request?: Request, slackId?: string): Promise<{ address1: string; address2: string; city: string; state: string; zip: string } | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const address1 = records[0].get("address1") as string;
-                const address2 = records[0].get("address2") as string;
-                const city = records[0].get("city") as string;
-                const state = records[0].get("state") as string;
-                const zip = records[0].get("zip") as string;
-                resolve({ address1, address2, city, state, zip });
-            });
-    });
-}
-
-export async function getEmailAddress(request?: Request, slackId?: string): Promise<string | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<AirtableFieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const emailAddress = records[0].get("email") as string;
-                resolve(emailAddress);
-            });
-    });
-}
-
-export async function getCountry(request?: Request, slackId?: string): Promise<string | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const country = records[0].get("country") as string;
-                resolve(country);
-            });
-    });
-}
-
-export async function getPhoneNumber(request?: Request, slackId?: string): Promise<string | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const phoneNumber = records[0].get("phone") as string;
-                resolve(phoneNumber);
-            });
-    });
-}
-
-export async function getJourneyNumber(request?: Request, slackId?: string): Promise<number | null> {
-    let id = slackId;
-    if (!id) {
-        id = await getSlackId(request);
-    }
-    if (!id) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const journeyNumber = records[0].get("journeyNumber") as number;
-                resolve(journeyNumber);
-            });
-    });
-}
-
 export async function updateGoldBars(slackId: string, newGoldBarCount: number): Promise<void> {
     let id: string = slackId;
     const currentGoldBars = await getGoldBars(undefined, id);
@@ -412,7 +214,7 @@ export async function updateGoldBars(slackId: string, newGoldBarCount: number): 
     return new Promise((resolve, reject) => {
         base("Users")
             .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
+            .firstPage((error, records: readonly AirtableRecord<AirtableFieldSet>[] = []) => {
                 if (error) {
                     reject(error);
                     return;
@@ -442,6 +244,39 @@ export async function updateGoldBars(slackId: string, newGoldBarCount: number): 
     });
 }
 
+export async function updateJourneyNumber(slackId: string, newJourneyNumber: number): Promise<void> {
+    let id: string = slackId;
+    const currentJourneyNumber = await getJourneyNumber(undefined, id);
+    if (currentJourneyNumber === null) {
+        throw new Error("User not found");
+    }
+    if (currentJourneyNumber === newJourneyNumber) {
+        return;
+    }
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error, records: readonly AirtableRecord<AirtableFieldSet>[] = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve();
+                    return;
+                }
+                const recordId = records[0].id;
+                base("Users").update(recordId, { journeyNumber: newJourneyNumber }, (error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+    });
+}
+// Item management functions
 export async function createItem(name: string, description: string, price: number, imageUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
         base("Items").create(
@@ -486,7 +321,51 @@ export async function deleteItem(itemName: string): Promise<void> {
     });
 }
 
-export async function getOrders(request: Request): Promise<Order[]> {
+// Item management functions
+export async function getItemById(itemId: string): Promise<Item | null> { // deprecated
+    return getItem(itemId, undefined);
+}
+
+export async function getItem(itemId?: string, itemName?: string): Promise<Item | null> {
+    return new Promise((resolve, reject) => {
+        let filterFormula = "";
+        if (itemId) {
+            filterFormula = `{id} = '${itemId}'`;
+        } else if (itemName) {
+            filterFormula = `{name} = '${itemName}'`;
+        } else {
+            resolve(null);
+            return;
+        }
+
+        base("Items").select({
+            filterByFormula: filterFormula
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                resolve(null);
+                return;
+            }
+            const record = records[0];
+            const item: Item = {
+                recId: record.id,
+                id: record.id,
+                name: record.get("name") as string,
+                description: record.get("description") as string,
+                price: record.get("price") as number,
+                imageUrl: record.get("imageUrl") as string,
+                reward: record.get("reward") as boolean,
+            };
+            resolve(item);
+        });
+    });
+}
+
+// Order management functions
+export async function getOrders(request: Request): Promise<Record<string, Omit<Order, 'id'>>> {
     const slackId = await getSlackId(request);
     return new Promise((resolve, reject) => {
         base("Users").select({
@@ -500,11 +379,12 @@ export async function getOrders(request: Request): Promise<Order[]> {
                 resolve({});
                 return;
             }
+            const userRecordId = records[0].id;
             const results: Record<string, Omit<Order, 'id'>> = {};
             base("Orders").select({
-                filterByFormula: `{slackId} = '${slackId}'`
+                filterByFormula: `{slackId} = '${userRecordId}'`
             }).eachPage(
-                function page(records: ReadonlyArray<Airtable.Record<Airtable.FieldSet>>, fetchNextPage: () => void) {
+                function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
                     for (const record of records) {
                         const id = record.get("id") as number;
                         results[id] = {
@@ -591,34 +471,8 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
     });
 }
 
-export async function getItemById(itemId: string): Promise<Item | null> {
-    return new Promise((resolve, reject) => {
-        base("Items").select({
-            filterByFormula: `{id} = '${itemId}'`
-        }).firstPage((error, records) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (!records || records.length === 0) {
-                resolve(null);
-                return;
-            }
-            const record = records[0];
-            const item: Item = {
-                id: record.id,
-                name: record.get("name") as string,
-                description: record.get("description") as string,
-                price: record.get("price") as number,
-                imageUrl: record.get("imageUrl") as string,
-                reward: record.get("reward") as boolean,
-            };
-            resolve(item);
-            });
-    })
-}
-
-export async function journeyIdToRecordId(journeyId: number): Promise<string | null> {
+// Journey management functions
+export async function journeyIdToRecordId(journeyId: number): Promise<string | null> { // deprecated
     return new Promise((resolve, reject) => {
         base("Journeys").select({
             filterByFormula: `{id} = ${journeyId}`
@@ -637,10 +491,20 @@ export async function journeyIdToRecordId(journeyId: number): Promise<string | n
     });
 }
 
-export async function getJourneyById(journeyId: number): Promise<Journey | null> {
+export async function getJourneyById(journeyId?: number, journeyRecordId?: string): Promise<Journey | null> {
     return new Promise((resolve, reject) => {
+        let filterFormula = "";
+        if (journeyId !== undefined) {
+            filterFormula = `{id} = ${journeyId}`;
+        } else if (journeyRecordId !== undefined) {
+            filterFormula = `{id} = '${journeyRecordId}'`;
+        } else {
+            resolve(null);
+            return;
+        }
+
         base("Journeys").select({
-            filterByFormula: `{id} = ${journeyId}`
+            filterByFormula: filterFormula
         }).firstPage((error, records) => {
             if (error) {
                 reject(error);
@@ -663,7 +527,7 @@ export async function getJourneyById(journeyId: number): Promise<Journey | null>
     });
 }  
 
-export async function userSlackIdToUserRecord(slackId: string): Promise<Airtable.Record<Airtable.FieldSet> | null> {
+export async function userSlackIdToUserRecord(slackId: string): Promise<AirtableRecord<AirtableFieldSet> | null> { // deprecated
     return new Promise((resolve, reject) => {
         base("Users").select({
             filterByFormula: `{slackId} = '${slackId}'`
@@ -681,123 +545,7 @@ export async function userSlackIdToUserRecord(slackId: string): Promise<Airtable
     });
 }
 
-function getFirstOrDefault(value: unknown): string {
-    if (Array.isArray(value) && value.length > 0) {
-        return String(value[0]);
-    }
-    return typeof value === "string" ? value : "";
-}
-
-function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>): Submission {
-    return {
-        id: record.get("id") as number,
-        journeyNumber: record.get("journeyNumber") as number,
-        "Hackatime Project name": record.get("Hackatime Project name") as string,
-        status: record.get("status") as "unreviewed" | "rejected" | "approved",
-        "Optional - Override Hours Spent": record.get("Optional - Override Hours Spent") as number | undefined,
-        "Optional - Override Hours Spent Justification": record.get("Optional - Override Hours Spent Justification") as string | undefined,
-        "Screenshot": record.get("Screenshot") as string[],
-        "Description": record.get("Description") as string,
-        "GitHub Username": record.get("GitHub Username") as string,
-        "Code URL": record.get("Code URL") as string,
-        "Playable URL": record.get("Playable URL") as string,
-        "User": getFirstOrDefault(record.get("User")),
-        "Slack ID": getFirstOrDefault(record.get("Slack ID")),
-        "First Name": getFirstOrDefault(record.get("First Name")),
-        "Last Name": getFirstOrDefault(record.get("Last Name")),
-        "Email": getFirstOrDefault(record.get("Email")),
-        "Country": getFirstOrDefault(record.get("Country")),
-        "Address (Line 1)": getFirstOrDefault(record.get("Address (Line 1)")),
-        "State / Province": getFirstOrDefault(record.get("State / Province")),
-        "City": getFirstOrDefault(record.get("City")),
-        "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
-        "Birthday": getFirstOrDefault(record.get("Birthday")),
-    };
-}
-
-export async function getSubmissionBySlackId(slackId: string): Promise<Submission | null> {
-    const userRecord = await userSlackIdToUserRecord(slackId);
-    if (!userRecord) {
-        return null;
-    }
-    return new Promise((resolve, reject) => {
-        base("Submissions").select({
-            filterByFormula: `{User} = '${userRecord.id}'`
-        }).firstPage((error, records) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (!records || records.length === 0) {
-                resolve(null);
-                return;
-            }
-            resolve(submissionRecordToSubmission(records[0]));
-        });
-    });
-}
-
-export async function addToCompleters(journeyId: number, userRecordId: string): Promise<void> {
-    const recordId = await journeyIdToRecordId(journeyId);
-    if (!recordId) {
-        throw new Error("Journey not found");
-    }
-    return new Promise((resolve, reject) => {
-        base("Journeys").find(recordId, (error, record) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            const completers = record.get("completers") as string[] || [];
-            if (completers.includes(userRecordId)) {
-                resolve();
-                return;
-            }
-            completers.push(userRecordId);
-            base("Journeys").update(recordId, { completers }, (updateError) => {
-                if (updateError) {
-                    reject(updateError);
-                    return;
-                }
-                resolve();
-            });
-        });
-    });
-}
-
-export async function updateJourneyNumber(slackId: string, newJourneyNumber: number): Promise<void> {
-    let id: string = slackId;
-    const currentJourneyNumber = await getJourneyNumber(undefined, id);
-    if (currentJourneyNumber === null) {
-        throw new Error("User not found");
-    }
-    if (currentJourneyNumber === newJourneyNumber) {
-        return;
-    }
-    return new Promise((resolve, reject) => {
-        base("Users")
-            .select({ filterByFormula: `{slackId} = '${id}'` })
-            .firstPage((error, records: readonly Airtable.Record<Airtable.FieldSet>[] = []) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (!records || records.length === 0) {
-                    resolve();
-                    return;
-                }
-                const recordId = records[0].id;
-                base("Users").update(recordId, { journeyNumber: newJourneyNumber }, (error) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve();
-                });
-            });
-    });
-}
-
+// Submittion workflow
 export async function sendProjectToReview(slackId: string, journeyNumber: number, HackatimeProjectName: string, screenshotUrl: string, description: string, githubUsername: string, codeUrl: string, playableUrl: string): Promise<string> {
     if (journeyNumber > 7) {
         throw new Error("Congrats on completing the treasure hunt! Stay tuned for future adventures.");
@@ -856,7 +604,7 @@ export async function sendProjectToReview(slackId: string, journeyNumber: number
                     } as any
                 },
             ],
-            (error: unknown, records?: readonly Airtable.Record<Airtable.FieldSet>[]) => {
+            (error: unknown, records?: readonly AirtableRecord<AirtableFieldSet>[]) => {
                 if (error) {
                     reject(error);
                     return;
@@ -909,7 +657,7 @@ export async function createProject(slackId: string, project: Project): Promise<
                     } as any
                 },
             ],
-            (error: unknown, records?: readonly Airtable.Record<Airtable.FieldSet>[]) => {
+                    (error: unknown, records?: readonly AirtableRecord<AirtableFieldSet>[]) => {
                 if (error) {
                     reject(error);
                     return;
@@ -933,7 +681,7 @@ export async function submitProjectForReview(slackId: string, projectId: string)
     return new Promise<void>((resolve, reject) => {
         // get project records from id, and submitting it to sendProjectToReview
         base("Projects").find(projectId, async (error, record) => {
-            if (error) {
+            if (error || !record) {
                 reject(error);
                 return;
             }
@@ -1033,4 +781,88 @@ export async function getJourneyLetter(journeyId: number): Promise<string | null
             resolve(letter);
         });
     });
+}
+
+export async function getSubmissionBySlackId(slackId: string): Promise<Submission | null> {
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        return null;
+    }
+    return new Promise((resolve, reject) => {
+        base("Submissions").select({
+            filterByFormula: `{User} = '${userRecord.id}'`
+        }).firstPage((error, records) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!records || records.length === 0) {
+                resolve(null);
+                return;
+            }
+            resolve(submissionRecordToSubmission(records[0]));
+        });
+    });
+}
+
+export async function addToCompleters(journeyId: number, userRecordId: string): Promise<void> {
+    const recordId = await journeyIdToRecordId(journeyId);
+    if (!recordId) {
+        throw new Error("Journey not found");
+    }
+    return new Promise((resolve, reject) => {
+        base("Journeys").find(recordId, (error, record) => {
+            if (error || !record) {
+                reject(error ?? new Error("Journey not found"));
+                return;
+            }
+            const completers = (record.get("completers") as string[]) || [];
+            if (completers.includes(userRecordId)) {
+                resolve();
+                return;
+            }
+            completers.push(userRecordId);
+            base("Journeys").update(recordId, { completers }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                resolve();
+            });
+        });
+    });
+}
+// others
+function getFirstOrDefault(value: unknown): string {
+    if (Array.isArray(value) && value.length > 0) {
+        return String(value[0]);
+    }
+    return typeof value === "string" ? value : "";
+}
+
+function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>): Submission {
+    return {
+        id: record.get("id") as number,
+        journeyNumber: record.get("journeyNumber") as number,
+        "Hackatime Project name": record.get("Hackatime Project name") as string,
+        status: record.get("status") as "unreviewed" | "rejected" | "approved",
+        "Optional - Override Hours Spent": record.get("Optional - Override Hours Spent") as number | undefined,
+        "Optional - Override Hours Spent Justification": record.get("Optional - Override Hours Spent Justification") as string | undefined,
+        "Screenshot": record.get("Screenshot") as string[],
+        "Description": record.get("Description") as string,
+        "GitHub Username": record.get("GitHub Username") as string,
+        "Code URL": record.get("Code URL") as string,
+        "Playable URL": record.get("Playable URL") as string,
+        "User": getFirstOrDefault(record.get("User")),
+        "Slack ID": getFirstOrDefault(record.get("Slack ID")),
+        "First Name": getFirstOrDefault(record.get("First Name")),
+        "Last Name": getFirstOrDefault(record.get("Last Name")),
+        "Email": getFirstOrDefault(record.get("Email")),
+        "Country": getFirstOrDefault(record.get("Country")),
+        "Address (Line 1)": getFirstOrDefault(record.get("Address (Line 1)")),
+        "State / Province": getFirstOrDefault(record.get("State / Province")),
+        "City": getFirstOrDefault(record.get("City")),
+        "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
+        "Birthday": getFirstOrDefault(record.get("Birthday")),
+    };
 }
