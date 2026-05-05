@@ -21,7 +21,7 @@
     onclick={() => isMobileOpen = !isMobileOpen}
     aria-label="Toggle navigation"
   >
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffe4b5" stroke-width="2">
       <line x1="3" y1="6" x2="21" y2="6"></line>
       <line x1="3" y1="12" x2="21" y2="12"></line>
       <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -32,14 +32,6 @@
   <nav class="sidebar" class:open={isMobileOpen}>
     <!-- Header -->
     <div class="sidebar-header">
-      <!--<h2>TREASURE HUNT</h2>
-      <button 
-        class="close-btn"
-        onclick={() => isMobileOpen = false}
-        aria-label="Close navigation"
-      >
-        ✕
-      </button>-->
       <img src="/assets/Text-logo (two lines).webp" alt="Treasure Hunt Logo" class="h-20 md:h-24 object-contain" />
     </div>
 
@@ -77,20 +69,29 @@
   }
   .sidebar-container {
     position: relative;
-    height: 100%;
+    width: 250px;
+    min-width: 250px;
+    flex-shrink: 0;
+    height: 100vh;
   }
 
   .mobile-toggle {
     display: none;
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
     background: none;
     border: none;
     cursor: pointer;
     padding: 0.5rem;
     color: #1B2D48;
-    z-index: 50;
+    z-index: 60;
   }
 
   .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
     width: 250px;
     background: linear-gradient(135deg, #6f4326 0%, #593219 50%, #6f4326 100%);
     border-right: 3px solid #E8BB35;
@@ -99,6 +100,7 @@
     height: 100vh;
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease;
+    z-index: 45;
   }
 
   .sidebar-header {
@@ -282,13 +284,19 @@
       display: flex;
     }
 
+    .sidebar-container {
+      width: auto;
+      min-width: 0;
+      height: auto;
+    }
+
     .sidebar {
       position: fixed;
       left: 0;
       top: 0;
       height: 100vh;
       transform: translateX(-100%);
-      z-index: 45;
+      z-index: 55;
       border-radius: 0 8px 8px 0;
     }
 
