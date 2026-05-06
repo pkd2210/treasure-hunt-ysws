@@ -227,50 +227,50 @@
                     <!-- Journey 1 -->
                     <g transform="translate(200, 150)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
-                    <image href="PRIZE_1_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 1</text>
+                    <image href="https://cdn.hackclub.com/019dfd40-ba68-79dc-a5e8-5e256100ec06/pile_of_stickers.webp" x="-25" y="-25" width="50" height="50" />
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Sticker Pack</text>
                     </g>
 
                     <!-- Journey 2 -->
                     <g transform="translate(260, 290)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
                     <image href="PRIZE_2_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 2</text>
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">32GB USB STICK</text>
                     </g>
 
                     <!-- Journey 3 -->
                     <g transform="translate(140, 430)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
-                    <image href="PRIZE_3_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 3</text>
+                    <image href="https://cdn.hackclub.com/019dfd3f-c61d-7eac-a65c-7859734e0f4b/Screenshot%202025-12-10%20at%2002.29.41.webp" x="-25" y="-25" width="50" height="50" />
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">.com Domain (Non-Premium)</text>
                     </g>
 
                     <!-- Journey 4 -->
                     <g transform="translate(260, 570)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
-                    <image href="PRIZE_4_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 4</text>
+                    <image href="https://cdn.hackclub.com/019dfd52-5436-76e8-93ac-235adc43536b/download.png" x="-25" y="-25" width="50" height="50" />
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Treasure hunt T-Shirt</text>
                     </g>
 
                     <!-- Journey 5 -->
                     <g transform="translate(140, 710)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
                     <image href="PRIZE_5_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 5</text>
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Treasure hunt Shirt Pin</text>
                     </g>
 
                     <!-- Journey 6 -->
                     <g transform="translate(260, 850)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
-                    <image href="PRIZE_6_URL" x="-25" y="-25" width="50" height="50" />
-                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Prize 6</text>
+                    <image href="https://cdn.hackclub.com/019dfd3e-dca1-7e0b-9b89-34b888b928ce/642d475c-0556-4cf5-9609-6cfbb8c8f4ba.webp" x="-25" y="-25" width="50" height="50" />
+                    <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Hack Club Socks</text>
                     </g>
 
                     <!-- Journey 7 (Final Treasure) -->
                     <g transform="translate(200, 990)">
                     <circle r="45" fill="#FFB400" stroke="#1B2D48" stroke-width="4" />
-                    <image href="PRIZE_7_URL" x="-30" y="-30" width="60" height="60" />
-                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">Prize 7</text>
+                    <image href="https://cdn.hackclub.com/019dfd68-b323-7f99-bc5a-5636b29ef70d/Untitled8.png" x="-30" y="-30" width="60" height="60" />
+                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">Orpheus Plushie</text>
                     <!-- Red "X" -->
                     <path d="M-15,-15 L15,15 M-15,15 L15,-15" stroke="#EC3750" stroke-width="6" opacity="0.8" />
                     </g>
