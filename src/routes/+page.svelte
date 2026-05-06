@@ -269,8 +269,8 @@
                     <!-- Journey 7 (Final Treasure) -->
                     <g transform="translate(200, 990)">
                     <circle r="45" fill="#FFB400" stroke="#1B2D48" stroke-width="4" />
-                    <image href="" x="-30" y="-30" width="60" height="60" />
-                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">Something worth 30$</text>
+                    <image href="https://cdn.hackclub.com/019dfe09-07cc-7ba4-8b15-eb30fb22e457/download%20(1).png" x="-30" y="-30" width="60" height="60" />
+                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">A Book with all participants' Projects!</text>
                     <!-- Red "X" -->
                     <path d="M-15,-15 L15,15 M-15,15 L15,-15" stroke="#EC3750" stroke-width="6" opacity="0.8" />
                     </g>
