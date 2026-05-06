@@ -269,8 +269,8 @@
                     <!-- Journey 7 (Final Treasure) -->
                     <g transform="translate(200, 990)">
                     <circle r="45" fill="#FFB400" stroke="#1B2D48" stroke-width="4" />
-                    <image href="https://cdn.hackclub.com/019dfd68-b323-7f99-bc5a-5636b29ef70d/Untitled8.png" x="-30" y="-30" width="60" height="60" />
-                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">Orpheus Plushie</text>
+                    <image href="" x="-30" y="-30" width="60" height="60" />
+                    <text y="65" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#EC3750">Something worth 30$</text>
                     <!-- Red "X" -->
                     <path d="M-15,-15 L15,15 M-15,15 L15,-15" stroke="#EC3750" stroke-width="6" opacity="0.8" />
                     </g>
