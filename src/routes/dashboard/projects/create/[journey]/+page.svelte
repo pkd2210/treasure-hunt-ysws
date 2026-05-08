@@ -1,1 +1,5 @@
-HERE YOU WILL CREATE A PROJECT!
+<script>
+    const journey = $derived(Number(get(page).params.journey));
+
+    
+</script>

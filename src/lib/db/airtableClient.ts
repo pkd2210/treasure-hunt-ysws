@@ -816,6 +816,96 @@ export async function createProject(slackId: string, project: Project): Promise<
     });
 }
 
+export async function getProjects(request?: Request, slackId?: string): Promise<Project[]> {
+    // use userSlackIdToUserRecord if slackId is provided to get user record, then filter projects by user record id
+    let userRecord: AirtableRecord<AirtableFieldSet> | null = null;
+    if (slackId) {
+        userRecord = await userSlackIdToUserRecord(slackId);
+        if (!userRecord) {
+            throw new Error("User not found");
+        }
+    }
+//    return new Promise<Project[]>((resolve, reject) => {
+//        let filterFormula = "";
+//        if (userRecord) {
+//            filterFormula = `{user} = '${userRecord.id}'`;
+//        }
+//        base("Projects").select({
+//            filterByFormula: filterFormula
+//        }).firstPage((err, records) => {
+//            if (err) {
+//                reject(err);
+//                return;
+//            }
+//            const projects: Project[] = records.map((record) => ({
+//                user: record.get("user") as string,
+//                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
+//                projectName: record.get("projectName") as string,
+//                description: record.get("description") as string,
+//                codeUrl: record.get("codeUrl") as string,
+//                readmeUrl: record.get("readmeUrl") as string,
+//                demoUrl: record.get("demoUrl") as string,
+//                screenshot: record.get("screenshot") as string,
+//                aiUsage: record.get("aiUsage") as string,
+//                hackatimeProject: record.get("hackatimeProject") as string,
+//                journeyNumber: record.get("journeyNumber") as number,
+//                submission: record.get("submission") as string | null,
+//                yswsEligible: false,
+//            }));
+//            resolve(projects);
+//        });
+//    });
+
+    // return mock projects for testing without airtable access
+    return Promise.resolve([
+        {
+            user: userRecord ? userRecord.id : "rec123",
+            status: "unreviewed",
+            projectName: "Journey 1 Mock Project",
+            description: "This is a mock project for journey 1.",
+            codeUrl: "https://github.com/hackclub/ysws-mock-project-1",
+            readmeUrl: "https://github.com/hackclub/ysws-mock-project-1/blob/main/README.md",
+            demoUrl: "https://hackclub.github.io/ysws-mock-project-1",
+            screenshot: "https://example.com/screenshot-1.png",
+            aiUsage: "No AI usage",
+            hackatimeProject: "Mock Hackatime Project 1",
+            journeyNumber: 1,
+            submission: null,
+            yswsEligible: false,
+        },
+        {
+            user: userRecord ? userRecord.id : "rec123",
+            status: "approved",
+            projectName: "Journey 2 Mock Project",
+            description: "This is a mock project for journey 2.",
+            codeUrl: "https://github.com/hackclub/ysws-mock-project-2",
+            readmeUrl: "https://github.com/hackclub/ysws-mock-project-2/blob/main/README.md",
+            demoUrl: "https://hackclub.github.io/ysws-mock-project-2",
+            screenshot: "https://example.com/screenshot-2.png",
+            aiUsage: "No AI usage",
+            hackatimeProject: "Mock Hackatime Project 2",
+            journeyNumber: 2,
+            submission: null,
+            yswsEligible: false,
+        },
+        {
+            user: userRecord ? userRecord.id : "rec123",
+            status: "rejected",
+            projectName: "Journey 3 Mock Project",
+            description: "This is a mock project for journey 3.",
+            codeUrl: "https://github.com/hackclub/ysws-mock-project-3",
+            readmeUrl: "https://github.com/hackclub/ysws-mock-project-3/blob/main/README.md",
+            demoUrl: "https://hackclub.github.io/ysws-mock-project-3",
+            screenshot: "https://example.com/screenshot-3.png",
+            aiUsage: "No AI usage",
+            hackatimeProject: "Mock Hackatime Project 3",
+            journeyNumber: 3,
+            submission: null,
+            yswsEligible: false,
+        }
+    ]);
+}
+
 export async function submitProjectForReview(slackId: string, projectId: string): Promise<void> {
     const userRecord = await userSlackIdToUserRecord(slackId);
     if (!userRecord) {
