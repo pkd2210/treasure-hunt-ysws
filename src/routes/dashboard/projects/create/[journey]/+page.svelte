@@ -161,24 +161,24 @@
       <!-- Project Name -->
       <text x="0" y="0" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">PROJECT NAME</text>
       <foreignObject x="0" y="10" width="640" height="40">
-      <input type="text" id="projectName" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
+      <input type="text" id="projectName" placeholder="A Ver Cool project!" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
       </foreignObject>
 
       <!-- Description -->
       <text x="0" y="85" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">DESCRIPTION</text>
       <foreignObject x="0" y="95" width="640" height="80">
-      <textarea id="description" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: none;"></textarea>
+      <textarea id="description" placeholder="A short yapping about your project..." style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: none;"></textarea>
       </foreignObject>
 
       <!-- Readme & Demo URL (Side by Side) -->
       <text x="0" y="210" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">README URL</text>
       <foreignObject x="0" y="220" width="310" height="40">
-      <input type="text" id="readmeUrl" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
+      <input type="text" id="readmeUrl" placeholder="https://github.com/hackclub/randomproject/readme.md" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
       </foreignObject>
 
       <text x="330" y="210" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">DEMO URL</text>
       <foreignObject x="330" y="220" width="310" height="40">
-      <input type="text" id="demoUrl" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
+      <input type="text" id="demoUrl" placeholder="https://hackclub.com" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
       </foreignObject>
 
       <!-- Screenshot Upload Area -->
@@ -190,7 +190,7 @@
       <!-- AI Usage -->
       <text x="0" y="460" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">AI USAGE (HOW DID YOU USE IT?)</text>
       <foreignObject x="0" y="470" width="640" height="80">
-      <textarea id="aiUsage" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: none;"></textarea>
+      <textarea id="aiUsage" placeholder="Describe how you used AI in your project (If you used it)..." style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: none;"></textarea>
       </foreignObject>
 
       <!-- Hackatime Project -->
