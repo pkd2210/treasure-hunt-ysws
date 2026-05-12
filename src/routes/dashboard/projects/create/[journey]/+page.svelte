@@ -170,7 +170,7 @@
           stroke-linejoin="round" />
 
     <!-- Header -->
-    <text x="400" y="90" text-anchor="middle" font-family="'Luckiest Guy', cursive" font-weight="900" font-size="32" fill="#1B2D48">SUBMIT YOUR PROJECT</text>
+    <text x="400" y="90" text-anchor="middle" font-family="'Luckiest Guy', cursive" font-weight="900" font-size="32" fill="#1B2D48">CREATE YOUR PROJECT</text>
     <text x="400" y="130" text-anchor="middle" font-family="'Luckiest Guy', cursive" font-weight="900" font-size="28" fill="#1B2D48">JOURNEY {journey}</text>
     <line x1="250" y1="150" x2="550" y2="150" stroke="#1B2D48" stroke-width="2" stroke-dasharray="5,5" opacity="0.4" />
 

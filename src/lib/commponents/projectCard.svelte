@@ -14,7 +14,8 @@
     const scale = () => big ? 2.5 : 1;
     const textX = () => big ? 325 : 125;
     const statusX = () => big ? 40 : 20;
-     const createHref = () => `/dashboard/projects/create/${number}`;
+    const editHref = () => `/dashboard/projects/edit/${number}`;
+    const createHref = () => `/dashboard/projects/create/${number}`;
 
     if (project?.description && project.description.length > 23) {
         project.description = project.description.slice(0, 23) + '...';
@@ -47,6 +48,7 @@
         </a>
     {/if}
 {:else}
+    <a href={editHref()}>
     <g transform="translate({translateX()}, {translateY()}) scale(1.1)" opacity={locked ? 0.45 : 1} style={locked ? 'cursor: not-allowed;' : 'cursor: pointer;'}>
        <!-- Small Wobbly Card for the Item -->
         <g transform="scale({scale()},1)">
@@ -61,4 +63,5 @@
     <text x={statusX()} y="145" font-family="monospace" font-weight="900" font-size="14" fill={projectStatusColor()}>{project?.status || 'UNSHIPPED'}</text>
 
     </g>
+    </a>
 {/if}
