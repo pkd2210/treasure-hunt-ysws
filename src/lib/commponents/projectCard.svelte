@@ -15,6 +15,10 @@
     const textX = () => big ? 325 : 125;
     const statusX = () => big ? 40 : 20;
      const createHref = () => `/dashboard/projects/create/${number}`;
+
+    if (project?.description && project.description.length > 23) {
+        project.description = project.description.slice(0, 23) + '...';
+    }
 </script>
 
 {#if create == true}

@@ -1,52 +1,44 @@
 <script>
+      import { onMount } from 'svelte';
       import ProjectCard from '$lib/commponents/projectCard.svelte';
+
+      let projects = $state({});
+      let isLoading = $state(true);
+      let error = $state('');
+      let projectAmount = $state(0);
+
+      onMount(async () => {
+            // 
+
+
+            try {
+                  const response = await fetch('/api/projects/getProjects');
+                  if (!response.ok) {
+                        const responseText = await response.text();
+                        throw new Error(`Failed to load projects (${response.status}): ${responseText || 'No response body'}`);
+                  }
+
+                  const data = await response.json();
+                  projects = typeof data === 'object' && data !== null ? data : {};
+                  projectAmount = Object.keys(projects).length;
+            } catch (err) {
+                  error = err instanceof Error ? err.message : 'Unknown error while loading projects';
+            } finally {
+                  isLoading = false;
+            }
+      })
+
 </script>
 <div style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.1));">
   <svg viewBox="0 0 1000 850" xmlns="http://www.w3.org/2000/svg">
     <!-- FIXED Main Map Container - Path now closes perfectly (Z) -->
-    
-    <!-- Project 1 Slot -->
-      <ProjectCard number=1 create={true} locked={false}></ProjectCard>
-
-    <!-- Project 2 Slot -->
-      <ProjectCard number=2 project={{
-          name: 'JOURNEY #2',
-          description: 'A Random Project name',
-          status: 'UNSHIPPED',
-      }}></ProjectCard>
-
-    <!-- Project 3 Slot -->
-      <ProjectCard number=3 project={{
-          name: 'JOURNEY #3',
-          description: 'A Random Project name',
-          status: 'APPROVED',
-      }}></ProjectCard>
-
-    <!-- Project 4 Slot -->
-      <ProjectCard number=4 project={{
-             name: 'JOURNEY #4',
-             description: 'A Random Project name',
-             status: 'INREVIEW',
-            }}></ProjectCard>
-
-    <!-- Project 5 Slot -->
-      <ProjectCard number=5 project={{
-             name: 'JOURNEY #5',
-             description: 'A Random Project name',
-             status: 'NEED CHANGES',
-            }}></ProjectCard>
-    <!-- Project 6 Slot -->
-      <ProjectCard number=6 project={{
-             name: 'JOURNEY #6',
-             description: 'A Random Project name',
-             status: 'APPROVED',
-            }}></ProjectCard>
-       <!-- Project 7 Slot: only the card shape is stretched horizontally; texts remain normal size -->
-      <ProjectCard number=7 create={true} project={{
-             name: 'JOURNEY #7',
-             description: 'A Random Project name',
-             status: 'UNSHIPPED',
-            }} big={true}></ProjectCard>
+    {#each Array.from({ length: 7 }, (_, i) => i + 1) as journeyNum}
+      {#if projects[journeyNum]?.length}
+        <ProjectCard number={journeyNum} project={projects[journeyNum][0]} locked={false} big={journeyNum === 7} />
+      {:else}
+        <ProjectCard number={journeyNum} create={true} locked={journeyNum > projectAmount + 1} big={journeyNum === 7} />
+      {/if}
+    {/each}
 
 
   </svg>
