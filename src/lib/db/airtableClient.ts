@@ -890,7 +890,7 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
         },
         {
             user: userRecord ? userRecord.id : "rec123",
-            status: "INREVIEW",
+            status: "APPROVED",
             name: "Journey 3 Mock Project",
             description: "This is a mock project for journey 3.",
             codeUrl: "https://github.com/hackclub/ysws-mock-project-3",
@@ -905,7 +905,7 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
         },
         {
             user: userRecord ? userRecord.id : "rec123",
-            status: "NEED CHANGES",
+            status: "APPROVED",
             name: "Journey 4 Mock Project",
             description: "This is a mock project for journey 4.",
             codeUrl: "https://github.com/hackclub/ysws-mock-project-4",

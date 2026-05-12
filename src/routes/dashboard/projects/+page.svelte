@@ -7,6 +7,21 @@
       let error = $state('');
       let projectAmount = $state(0);
 
+      const isCreateable = (journeyNum) => {
+            if (projects[journeyNum]?.length) return false;
+
+            if (journeyNum === 1) return true;
+
+            const prevJourneySubmitted = projects[journeyNum - 1]?.length > 0;
+            if (!prevJourneySubmitted) return false;
+
+            if (journeyNum > 2) {
+                  const twoBackApproved = projects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
+                  if (!twoBackApproved) return false;
+            }
+
+            return true;
+      };
       onMount(async () => {
             // 
 
@@ -36,7 +51,7 @@
       {#if projects[journeyNum]?.length}
         <ProjectCard number={journeyNum} project={projects[journeyNum][0]} locked={false} big={journeyNum === 7} />
       {:else}
-        <ProjectCard number={journeyNum} create={true} locked={journeyNum > projectAmount + 1} big={journeyNum === 7} />
+            <ProjectCard number={journeyNum} create={true} locked={!isCreateable(journeyNum)} big={journeyNum === 7} />
       {/if}
     {/each}
 
