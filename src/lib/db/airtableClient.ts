@@ -17,27 +17,27 @@ async function getUserRecords(slackId?: string, request?: Request): Promise<Airt
         return null;
     }
     
-    //return new Promise((resolve, reject) => {
-    //    base("Users")
-    //        .select({ filterByFormula: `{slackId} = '${id}'` })
-    //        .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-    //            if (error) {
-    //                reject(error);
-    //                return;
-    //            }
-    //            if (!records || records.length === 0) {
-    //                resolve(null);
-    //                return;
-    //            }
-    //            resolve(records[0]);
-    //        })
-    //})
+    return new Promise((resolve, reject) => {
+        base("Users")
+            .select({ filterByFormula: `{slackId} = '${id}'` })
+            .firstPage((error: any, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                if (!records || records.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                resolve(records[0]);
+            })
+    })
 
     // return a template record for testing without airtable access
     // keep this as a simple mock object but cast it to the AirtableRecord type
     // DON'T DELETE THE COMMENTS
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return Promise.resolve({
+    /*return Promise.resolve({
         id: "rec123",
         get: (fieldName: string) => {
             const mockData: Record<string, any> = {
@@ -60,7 +60,7 @@ async function getUserRecords(slackId?: string, request?: Request): Promise<Airt
             // return undefined for unknown fields to mirror Airtable behavior
             return mockData.hasOwnProperty(fieldName) ? mockData[fieldName] : undefined;
         }
-    } as unknown as AirtableRecord<AirtableFieldSet>);
+    } as unknown as AirtableRecord<AirtableFieldSet>);*/
 }
 
 // User Get functions
@@ -156,34 +156,34 @@ export async function getJourneyNumber(request?: Request, slackId?: string): Pro
 }
 
 export function getItems(): Promise<Item[]> {
-//    return new Promise((resolve, reject) => {
-//        const results: Item[] = [];
-//        base("Items").select().eachPage(
-//            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
-//                for (const record of records) {
-//                    results.push({
-//                        recId: record.id,
-//                        id: record.get("id") as string,
-//                        name: record.get("name") as string,
-//                        description: record.get("description") as string,
-//                        price: record.get("price") as number,
-//                        imageUrl: record.get("imageUrl") as string,
-//                        reward: record.get("reward") as boolean,
-//                    });
-//                }
-//                fetchNextPage();
-//            },
-//           function done(error: any) {
-//                if (error) {
-//                    reject(error);
-//                } else {
-//                    resolve(results);
-//                }
-//            }
-//        );
-//    });
+    return new Promise((resolve, reject) => {
+        const results: Item[] = [];
+        base("Items").select().eachPage(
+            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
+                for (const record of records) {
+                    results.push({
+                        recId: record.id,
+                        id: record.get("id") as string,
+                        name: record.get("name") as string,
+                        description: record.get("description") as string,
+                        price: record.get("price") as number,
+                        imageUrl: record.get("imageUrl") as string,
+                        reward: record.get("reward") as boolean,
+                    });
+                }
+                fetchNextPage();
+            },
+           function done(error: any) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    });
     // return mock items for testing without airtable access
-    return Promise.resolve([
+    /*return Promise.resolve([
         {
             recId: "rec123",
             id: "item123",
@@ -283,7 +283,7 @@ export function getItems(): Promise<Item[]> {
             imageUrl: "https://cdn.hackclub.com/019d96d5-93a7-730d-84bf-1678f0f8b295/4apvimfttbw80qm0lp616ofwez6put538415.avif",
             reward: true,
         }
-    ]);
+    ]);*///
 }
 
 // Is user functions
@@ -825,39 +825,39 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
             throw new Error("User not found");
         }
     }
-//    return new Promise<Project[]>((resolve, reject) => {
-//        let filterFormula = "";
-//        if (userRecord) {
-//            filterFormula = `{user} = '${userRecord.id}'`;
-//        }
-//        base("Projects").select({
-//            filterByFormula: filterFormula
-//        }).firstPage((err, records) => {
-//            if (err) {
-//                reject(err);
-//                return;
-//            }
-//            const projects: Project[] = records.map((record) => ({
-//                user: record.get("user") as string,
-//                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
-//                projectName: record.get("projectName") as string,
-//                description: record.get("description") as string,
-//                codeUrl: record.get("codeUrl") as string,
-//                readmeUrl: record.get("readmeUrl") as string,
-//                demoUrl: record.get("demoUrl") as string,
-//                screenshot: record.get("screenshot") as string,
-//                aiUsage: record.get("aiUsage") as string,
-//                hackatimeProject: record.get("hackatimeProject") as string,
-//                journeyNumber: record.get("journeyNumber") as number,
-//                submission: record.get("submission") as string | null,
-//                yswsEligible: false,
-//            }));
-//            resolve(projects);
-//        });
-//    });
+    return new Promise<Project[]>((resolve, reject) => {
+        let filterFormula = "";
+        if (userRecord) {
+            filterFormula = `{user} = '${userRecord.id}'`;
+        }
+        base("Projects").select({
+            filterByFormula: filterFormula
+        }).firstPage((err, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            const projects: Project[] = records.map((record) => ({
+                user: record.get("user") as string,
+                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
+                projectName: record.get("projectName") as string,
+                description: record.get("description") as string,
+                codeUrl: record.get("codeUrl") as string,
+                readmeUrl: record.get("readmeUrl") as string,
+                demoUrl: record.get("demoUrl") as string,
+                screenshot: record.get("screenshot") as string,
+                aiUsage: record.get("aiUsage") as string,
+                hackatimeProject: record.get("hackatimeProject") as string,
+                journeyNumber: record.get("journeyNumber") as number,
+                submission: record.get("submission") as string | null,
+                yswsEligible: false,
+            }));
+            resolve(projects);
+        });
+    });
 
     // return mock projects for testing without airtable access
-    return Promise.resolve([
+    /*return Promise.resolve([
         {
             user: userRecord ? userRecord.id : "rec123",
             status: "UNSHIPPED",
@@ -918,7 +918,7 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
             submission: null,
             yswsEligible: false,
         }
-    ]);
+    ]);*///
 }
 
 export async function submitProjectForReview(slackId: string, projectId: string): Promise<void> {
