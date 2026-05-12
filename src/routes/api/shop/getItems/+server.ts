@@ -6,6 +6,6 @@ export async function GET() {
     const filteredItems = items.filter((item) => item.reward !== true);
 
     return new Response(JSON.stringify(filteredItems, null, 2), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, max-age=300' },
     });
 }
