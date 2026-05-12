@@ -46,7 +46,12 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
     }
 
-    if (event.url.pathname.startsWith('/api/') && event.url.pathname !== '/api/login' && !event.url.pathname.startsWith('/api/login/')) {
+    if (
+        event.url.pathname.startsWith('/api/') &&
+        event.url.pathname !== '/api/login' &&
+        !event.url.pathname.startsWith('/api/login/') &&
+        !event.url.pathname.startsWith('/api/uploadthing')
+    ) {
         if (!slackId) {
             return new Response('Not loggedin', { status: 401 });
         }
