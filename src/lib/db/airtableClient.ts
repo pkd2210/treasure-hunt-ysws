@@ -809,6 +809,9 @@ export async function createProject(slackId: string, project: Project): Promise<
                     reject(new Error('No record returned from Airtable'));
                     return;
                 }
+                sendUpdateDM(slackId, "Project Created", `Your project for Journey ${project.journeyNumber} has been created! You can update it or submit it for review when you're ready.`).catch(error => {
+                    console.error("Error sending project creation DM:", error);
+                });
                 resolve(records[0].id);
             }
         );
@@ -842,6 +845,9 @@ export async function updateProject(slackId: string, journeyNumber: number, upda
                     reject(updateErr);
                     return;
                 }
+                sendUpdateDM(slackId, "Project Updated", `Your project for Journey ${project.get("journeyNumber")} has been updated!`).catch(error => {
+                    console.error("Error sending project update DM:", error);
+                });
                 resolve();
             });
         });

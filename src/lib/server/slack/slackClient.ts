@@ -61,7 +61,7 @@ export async function sendUpdateDM(slackId: string, title: string, message: stri
                                 emoji: true,
                             },
                             value: "open_treasure_hunt",
-                            url: "https://treasure.peleg2210.me",
+                            url: "https://treasure.peleg2210.tech/dashboard",
                         },
                     ],
                 }, 
