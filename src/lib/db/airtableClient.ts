@@ -816,6 +816,38 @@ export async function createProject(slackId: string, project: Project): Promise<
     });
 }
 
+export async function updateProject(slackId: string, journeyNumber: number, updatedFields: Partial<Omit<Project, "journeyNumber" | "user">>): Promise<void> {
+    const userRecord = await userSlackIdToUserRecord(slackId);
+    if (!userRecord) {
+        throw new Error("User not found");
+    }
+    return new Promise<void>((resolve, reject) => {
+        base("Projects").select({
+            filterByFormula: `{journeyNumber} = ${journeyNumber}`
+        }).firstPage((checkErr, records) => {
+            if (checkErr) { reject(checkErr); return; }
+            if (!records || records.length === 0) { reject(new Error(`No project found for journey ${journeyNumber}`)); return; }
+            
+            // Verify this project belongs to the user
+            const project = records[0];
+            const users = project.get("user") as string[];
+            if (!users || !Array.isArray(users) || !users.includes(userRecord.id)) {
+                reject(new Error("You do not have permission to update this project"));
+                return;
+            }
+            
+            const recordId = project.id;
+            base("Projects").update(recordId, updatedFields as any, (updateErr) => {
+                if (updateErr) {
+                    reject(updateErr);
+                    return;
+                }
+                resolve();
+            });
+        });
+    });
+}
+
 export async function getProjects(request?: Request, slackId?: string): Promise<Project[]> {
     // use userSlackIdToUserRecord if slackId is provided to get user record, then filter projects by user record id
     let userRecord: AirtableRecord<AirtableFieldSet> | null = null;
