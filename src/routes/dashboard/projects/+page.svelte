@@ -1,11 +1,11 @@
 <script>
-      import { onMount } from 'svelte';
       import ProjectCard from '$lib/commponents/projectCard.svelte';
 
-      let projects = $state({});
-      let isLoading = $state(true);
-      let error = $state('');
-      let projectAmount = $state(0);
+      let { data } = $props();
+      let projects = $derived(data.projects);
+      let projectAmount = $derived(data.projectAmount);
+      let error = $derived(data.error);
+      let isLoading = $derived(false);
 
       const isCreateable = (journeyNum) => {
             if (projects[journeyNum]?.length) return false;
@@ -22,26 +22,6 @@
 
             return true;
       };
-      onMount(async () => {
-            // 
-
-
-            try {
-                  const response = await fetch('/api/projects/getProjects');
-                  if (!response.ok) {
-                        const responseText = await response.text();
-                        throw new Error(`Failed to load projects (${response.status}): ${responseText || 'No response body'}`);
-                  }
-
-                  const data = await response.json();
-                  projects = typeof data === 'object' && data !== null ? data : {};
-                  projectAmount = Object.keys(projects).length;
-            } catch (err) {
-                  error = err instanceof Error ? err.message : 'Unknown error while loading projects';
-            } finally {
-                  isLoading = false;
-            }
-      })
 
 </script>
 <div style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.1));">

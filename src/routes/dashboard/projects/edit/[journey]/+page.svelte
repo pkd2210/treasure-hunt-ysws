@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
@@ -18,15 +17,14 @@
     },
   });
 
-
     let { data } = $props();
 
     const journey = $derived(Number(get(page).params.journey));
+    const projects = $derived(data.projects);
+    const errorMessage = $derived(data.error);
 
-    let projects = $state({});
-    let errorMessage = $state('');
+    // Initialize form fields as empty
     let hackatimeProjectValue = $state('');
-
     let projectName = $state('');
     let description = $state('');
     let codeUrl = $state('');
@@ -34,32 +32,20 @@
     let demoUrl = $state('');
     let aiUsage = $state('');
 
-
-    onMount(async () => {
-      try {
-        const res = await fetch(`/api/projects/getProjects`);
-        const json = await res.json();
-        projects = json || {};
-        // projects are organized by journey number, so access directly
-        const journeyProjects = projects[journey] || [];
-        // set all fields based on the first project in the journey (if it exists)
-        if (journeyProjects.length > 0) {
-          const p = journeyProjects[0];
-            projectName = p.projectName || '';
-            hackatimeProjectValue = p.hackatimeProject || '';
-            screenshotUrl = p.screenshot || '';
-            description = p.description || '';
-            codeUrl = p.codeUrl || '';
-            readmeUrl = p.readmeUrl || '';
-            demoUrl = p.demoUrl || '';
-            aiUsage = p.aiUsage || '';
-        }
-
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        errorMessage = "Failed to load projects. Please try again later.";
+    // Populate from server data on initial load
+    $effect(() => {
+      if (data?.projectData) {
+        hackatimeProjectValue = data.projectData.hackatimeProject || '';
+        projectName = data.projectData.projectName || '';
+        description = data.projectData.description || '';
+        codeUrl = data.projectData.codeUrl || '';
+        readmeUrl = data.projectData.readmeUrl || '';
+        demoUrl = data.projectData.demoUrl || '';
+        aiUsage = data.projectData.aiUsage || '';
+        screenshotUrl = data.projectData.screenshot || '';
       }
     });
+
 
     async function sendUpdateProject() {
         try {

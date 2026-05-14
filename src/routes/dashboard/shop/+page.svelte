@@ -1,27 +1,10 @@
 <script>
-    import { onMount } from 'svelte';
     import ItemCard from '$lib/commponents/itemCard.svelte';
 
-    let items = $state([]);
-    let isLoading = $state(true);
-    let error = $state('');
-
-    onMount(async () => {
-        try {
-            const response = await fetch('/api/shop/getItems');
-            if (!response.ok) {
-                const responseText = await response.text();
-                throw new Error(`Failed to load shop items (${response.status}): ${responseText || 'No response body'}`);
-            }
-
-            const data = await response.json();
-            items = Array.isArray(data) ? data.filter((entry) => entry && typeof entry === 'object') : [];
-        } catch (err) {
-            error = err instanceof Error ? err.message : 'Unknown error while loading shop items';
-        } finally {
-            isLoading = false;
-        }
-    });
+    let { data } = $props();
+    let items = $derived(data.items);
+    let error = $derived(data.error);
+    let isLoading = $derived(false);
 </script>
 
 {#if isLoading}

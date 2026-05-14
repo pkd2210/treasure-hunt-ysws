@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
@@ -18,97 +17,23 @@
     },
   });
 
-
     let { data } = $props();
 
     const journey = $derived(Number(get(page).params.journey));
+    const projects = $derived(data.projects);
+    const canCreate = $derived(data.canCreate);
+    const errorMessage = $derived(data.errorMessage);
 
-    let projects = $state({});
-    let canCreate = $state(true);
-    let errorMessage = $state('');
     let hackatimeProjectValue = $state('');
 
-    const isCreateable = (journeyNum) => {
-        if (projects[journeyNum]?.length) return false;
+    // Check on mount if already has project (would have been handled server-side but can add client check if needed)
+    let projectName = $state('');
+    let description = $state('');
+    let codeUrl = $state('');
+    let readmeUrl = $state('');
+    let demoUrl = $state('');
+    let aiUsage = $state('');
 
-        if (journeyNum === 1) return true;
-
-        const prevJourneySubmitted = projects[journeyNum - 1]?.length > 0;
-        if (!prevJourneySubmitted) return false;
-
-        if (journeyNum > 2) {
-            const twoBackApproved = projects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
-            if (!twoBackApproved) return false;
-        }
-
-        return true;
-    };
-
-    const getErrorMessage = (journeyNum) => {
-        if (projects[journeyNum]?.length) {
-            return `You already have a project for Journey ${journeyNum}!`;
-        }
-
-        if (journeyNum > 1) {
-            const prevJourneySubmitted = projects[journeyNum - 1]?.length > 0;
-            if (!prevJourneySubmitted) {
-                return `Complete Journey ${journeyNum - 1} before attempting Journey ${journeyNum}!`;
-            }
-
-            if (journeyNum > 2) {
-                const twoBackApproved = projects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
-                if (!twoBackApproved) {
-                    return `Journey ${journeyNum - 2} must be APPROVED before you can create for Journey ${journeyNum}!`;
-                }
-            }
-        }
-        return 'You cannot create this project.';
-    };
-
-    // check if user already created that project / is allowed to create project for that journey
-    onMount(async () => {
-        try {
-            const response = await fetch(`/api/projects/getProjects`);
-            if (response.ok) {
-                const projectsData = await response.json();
-                
-                // Convert object to array if needed
-                let projectsArray = Array.isArray(projectsData) ? projectsData : Object.values(projectsData).flat();
-                
-                // Filter to only actual projects (not eligibility records)
-                const actualProjects = projectsArray.filter(p => p.projectName);
-                
-                // Organize projects by journey
-                const newProjects = {};
-                actualProjects.forEach(p => {
-                    if (!newProjects[p.journeyNumber]) {
-                        newProjects[p.journeyNumber] = [];
-                    }
-                    newProjects[p.journeyNumber].push(p);
-                });
-                
-                // Update state
-                projects = newProjects;
-                
-                // Check if can create - recompute after projects are set
-                if (!isCreateable(journey)) {
-                    canCreate = false;
-                    errorMessage = getErrorMessage(journey);
-                    return;
-                }
-
-                const existingProject = actualProjects.find(p => p.journeyNumber === journey);
-                if (existingProject) {
-                    alert("You have already created a project for this journey. Redirecting to your project page.");
-                    await goto(`/dashboard/projects/${existingProject.id}`);
-                }
-            } else {
-                console.error("Failed to fetch projects:", response.statusText);
-            }
-        } catch (error) {
-            console.error("Error fetching projects:", error);
-        }
-    });
     async function createProject() {
         const projectName = document.getElementById('projectName')?.value || '';
         const description = document.getElementById('description')?.value || '';
