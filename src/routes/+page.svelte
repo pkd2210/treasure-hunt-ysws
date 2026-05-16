@@ -255,7 +255,7 @@
                     <!-- Journey 5 -->
                     <g transform="translate(140, 710)">
                     <circle r="35" fill="#F3E1AD" stroke="#1B2D48" stroke-width="3" />
-                    <image href="PRIZE_5_URL" x="-25" y="-25" width="50" height="50" />
+                    <image href="https://cdn.hackclub.com/019e2c7a-3d9e-7827-93ea-5feb2e2d68e4/Gold%20Bar.webp" x="-25" y="-25" width="50" height="50" />
                     <text y="55" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="#1B2D48">Treasure hunt Shirt Pin</text>
                     </g>
 
