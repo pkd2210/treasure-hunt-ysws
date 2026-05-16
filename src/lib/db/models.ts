@@ -33,6 +33,7 @@ export type Order = {
     id: number;
     slackId: string;
     itemId: string;
+    amount: number;
     totalPrice: number;
     address: string;
     email: string;

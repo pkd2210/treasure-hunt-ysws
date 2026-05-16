@@ -1,4 +1,8 @@
 <script>
+  import { createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
+
   let { itemData = { name: "Item Not Found", description: "No description available.", price:  0, imageUrl: "" } } = $props();
 
     function getNameFontSize(name) {
@@ -41,7 +45,7 @@
     }
 
     function buyItem() {
-        alert(`You have bought ${itemData.name} for ${itemData.price} gold bars!`);
+      dispatch('buy', { item: itemData });
     }
 
     function onBuyKeyDown(event) {

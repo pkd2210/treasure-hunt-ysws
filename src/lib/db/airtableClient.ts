@@ -533,6 +533,7 @@ export async function getOrders(request: Request): Promise<Record<string, Omit<O
                         results[id] = {
                             slackId: slackId || "",
                             itemId: record.get("itemId") as string,
+                            amount: record.get("amount") as number,
                             totalPrice: record.get("totalPrice") as number,
                             address: record.get("address") as string,
                             email: record.get("email") as string,
@@ -592,6 +593,7 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
                             fields: {
                                 slackId: [userId],
                                 itemId: [itemRecordId],
+                                amount: order.amount,
                                 totalPrice: order.totalPrice,
                                 isDayPrize: order.isDayPrize,
                                 status: order.status,
@@ -603,7 +605,7 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<void> {
                             reject(createError);
                             return;
                         }
-                        sendUpdateDM(order.slackId, "Order Confirmation", `An order for \`\`\`${itemName}\`\`\` has been placed successfully!`).catch(error => {
+                        sendUpdateDM(order.slackId, "Order Confirmation", `An order for \`\`\`${itemName}\`\`\` x${order.amount} has been placed successfully!`).catch(error => {
                             console.error("Error sending order confirmation DM:", error);
                         });
                         resolve();

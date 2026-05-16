@@ -9,6 +9,11 @@ export async function GET({ request }: { request: Request }) {
         return new Response("Missing itemId or amount", { status: 400 });
     }
 
+    const quantity = parseInt(amount, 10);
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+        return new Response("Invalid amount", { status: 400 });
+    }
+
     // get Item name, price, dexcription, and imageurl from airtable
     const item = await getItemById(itemId);
     if (!item) {
@@ -18,7 +23,7 @@ export async function GET({ request }: { request: Request }) {
         return new Response("Cannot purchase reward items", { status: 400 });
     }
     const price = item.price;
-    const totalPrice = price * parseInt(amount, 10);
+    const totalPrice = price * quantity;
 
     const slackId = await getSlackId(request);
     if (!slackId) {
@@ -38,6 +43,7 @@ export async function GET({ request }: { request: Request }) {
     const order = {
         slackId,
         itemId,
+        amount: quantity,
         totalPrice,
         status: "pending",
     };
