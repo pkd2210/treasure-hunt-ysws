@@ -1044,12 +1044,40 @@ export async function submitProjectForReview(slackId: string, projectId: string)
             try {
                 const response = await fetch(finalUrl);
                 const data = await response.json();
-                if (Array.isArray(data.submissions) && data.submissions.length > 0) {
-                    reject(new Error("This project has already been submitted for some YSWS"));
+                // Manifest responses have varied shapes historically. Be tolerant:
+                // - { submissions: [...] }
+                // - [...] (top-level array)
+                // - other object shapes
+                let submissions: unknown[] = [];
+                if (Array.isArray(data)) {
+                    submissions = data as unknown[];
+                } else if (data && typeof data === 'object') {
+                    // prefer data.submissions when available
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    if (Array.isArray(data.submissions)) submissions = data.submissions;
+                    else {
+                        // try to discover any array-valued property that looks like submissions
+                        for (const key of Object.keys(data)) {
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                            // @ts-ignore
+                            if (Array.isArray(data[key])) {
+                                // pick the first reasonable array we find
+                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                // @ts-ignore
+                                submissions = data[key];
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (Array.isArray(submissions) && submissions.length > 0) {
+                    reject(new Error("This project has already been submitted for another YSWS"));
                     return;
                 }
             } catch (err) {
-                console.error("Error checking manifest for duplicate submission:", err);
+                console.error("Error checking manifest for duplicate submission");
                 reject(new Error("Error checking project submission status. Please try again later."));
                 return;
             }
