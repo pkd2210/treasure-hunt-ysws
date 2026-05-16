@@ -855,6 +855,11 @@ export async function updateProject(slackId: string, journeyNumber: number, upda
 }
 
 export async function getProjects(request?: Request, slackId?: string): Promise<Project[]> {
+    // Resolve slackId from request when only request context is provided.
+    if (!slackId && request) {
+        slackId = await getSlackId(request);
+    }
+
     // use userSlackIdToUserRecord if slackId is provided to get user record, then filter projects by user record id
     let userRecord: AirtableRecord<AirtableFieldSet> | null = null;
     if (slackId) {
@@ -864,34 +869,45 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
         }
     }
     return new Promise<Project[]>((resolve, reject) => {
-        let filterFormula = "";
-        if (userRecord) {
-            filterFormula = `{user} = '${userRecord.id}'`;
-        }
-        base("Projects").select({
-            filterByFormula: filterFormula
-        }).firstPage((err, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
-            if (err) {
-                reject(err);
-                return;
+        const collected: AirtableRecord<AirtableFieldSet>[] = [];
+        base("Projects").select().eachPage(
+            (records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) => {
+                collected.push(...records);
+                fetchNextPage();
+            },
+            (err: any) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                const visibleRecords = userRecord
+                    ? collected.filter((record) => {
+                        const users = record.get("user") as string[] | undefined;
+                        return Array.isArray(users) && users.includes(userRecord.id);
+                    })
+                    : collected;
+
+                const projects: Project[] = visibleRecords.map((record) => ({
+                    // put the recordId
+                    id: record.id as string,
+                    user: record.get("user") as string,
+                    status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
+                    projectName: record.get("projectName") as string,
+                    description: record.get("description") as string,
+                    codeUrl: record.get("codeUrl") as string,
+                    readmeUrl: record.get("readmeUrl") as string,
+                    demoUrl: record.get("demoUrl") as string,
+                    screenshot: record.get("screenshot") as string,
+                    aiUsage: record.get("aiUsage") as string,
+                    hackatimeProject: record.get("hackatimeProject") as string,
+                    journeyNumber: record.get("journeyNumber") as number,
+                    submission: record.get("submission") as string | null,
+                    yswsEligible: false,
+                }));
+                resolve(projects);
             }
-            const projects: Project[] = records.map((record) => ({
-                user: record.get("user") as string,
-                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
-                projectName: record.get("projectName") as string,
-                description: record.get("description") as string,
-                codeUrl: record.get("codeUrl") as string,
-                readmeUrl: record.get("readmeUrl") as string,
-                demoUrl: record.get("demoUrl") as string,
-                screenshot: record.get("screenshot") as string,
-                aiUsage: record.get("aiUsage") as string,
-                hackatimeProject: record.get("hackatimeProject") as string,
-                journeyNumber: record.get("journeyNumber") as number,
-                submission: record.get("submission") as string | null,
-                yswsEligible: false,
-            }));
-            resolve(projects);
-        });
+        );
     });
 
     // return mock projects for testing without airtable access

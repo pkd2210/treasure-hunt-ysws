@@ -82,6 +82,7 @@ export type Submission = {
 }
 
 export type Project = {
+    id: string;
     projectName: string;
     description: string;
     codeUrl: string;
