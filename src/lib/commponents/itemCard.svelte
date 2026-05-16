@@ -5,6 +5,9 @@
 
   let { itemData = { name: "Item Not Found", description: "No description available.", price:  0, imageUrl: "" } } = $props();
 
+  const nameLines = $derived(getNameLines(itemData.name));
+  const descriptionLines = $derived(getDescriptionLines(itemData.description));
+
     function getNameFontSize(name) {
       const length = (name || '').trim().length;
 
@@ -14,34 +17,73 @@
       return 14;
     }
 
-    function getNameLines(name) {
-      const safeName = (name || '').trim();
-      if (!safeName) return ['Item Not Found'];
+    function wrapText(text, maxCharsPerLine, maxLines) {
+      const safeText = (text || '').trim();
 
-      if (safeName.length >= 32) {
-        const words = safeName.split(/\s+/).filter(Boolean);
-        if (words.length < 2) return [safeName];
-
-        const midpoint = Math.floor(safeName.length / 2);
-        let bestIndex = 1;
-        let bestDistance = Infinity;
-
-        for (let i = 1; i < words.length; i += 1) {
-          const left = words.slice(0, i).join(' ');
-          const distance = Math.abs(left.length - midpoint);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestIndex = i;
-          }
-        }
-
-        return [
-          words.slice(0, bestIndex).join(' '),
-          words.slice(bestIndex).join(' ')
-        ];
+      if (!safeText) {
+        return [''];
       }
 
-      return [safeName];
+      const words = safeText.split(/\s+/).filter(Boolean);
+      const lines = [];
+      let currentLine = '';
+
+      const flushLine = () => {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = '';
+        }
+      };
+
+      for (const word of words) {
+        const candidate = currentLine ? `${currentLine} ${word}` : word;
+
+        if (candidate.length <= maxCharsPerLine) {
+          currentLine = candidate;
+          continue;
+        }
+
+        flushLine();
+
+        if (word.length <= maxCharsPerLine) {
+          currentLine = word;
+          continue;
+        }
+
+        for (let index = 0; index < word.length; index += maxCharsPerLine) {
+          lines.push(word.slice(index, index + maxCharsPerLine));
+        }
+      }
+
+      flushLine();
+
+      if (lines.length <= maxLines) {
+        return lines;
+      }
+
+      const truncatedLines = lines.slice(0, maxLines);
+      truncatedLines[maxLines - 1] = `${truncatedLines[maxLines - 1].replace(/\s+$/, '')}...`;
+      return truncatedLines;
+    }
+
+    function getNameLines(name) {
+      const safeName = (name || '').trim();
+
+      if (!safeName) {
+        return ['Item Not Found'];
+      }
+
+      return wrapText(safeName, 16, 2);
+    }
+
+    function getDescriptionLines(description) {
+      const safeDescription = (description || '').trim();
+
+      if (!safeDescription) {
+        return ['No description available.'];
+      }
+
+      return wrapText(safeDescription, 31, 3);
     }
 
     function buyItem() {
@@ -57,7 +99,7 @@
 </script>
 
 <div style="width: 300px; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
-  <svg viewBox="0 0 300 450" width="300" height="450" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+  <svg viewBox="0 0 300 450" width="300" height="450" xmlns="http://www.w3.org/2000/svg" style="display: block; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
     <!-- Main Card Body: Parchment Sand with Deep Ocean Blue border -->
     <path d="M10,20 Q15,10 30,12 L270,8 Q290,10 285,30 L295,420 Q290,440 270,435 L30,442 Q10,440 15,420 Z" 
           fill="#F3E1AD" stroke="#1B2D48" stroke-width="4" />
@@ -69,17 +111,16 @@
 
     <!-- Item Name: Using Hack Club Red inspired color -->
     <text x="150" y="258" text-anchor="middle" font-size={getNameFontSize(itemData.name)} font-weight="bold" fill="#EC3750" style="text-transform: uppercase;">
-      {#if getNameLines(itemData.name).length === 2}
-        <tspan x="150" dy="0">{getNameLines(itemData.name)[0]}</tspan>
-        <tspan x="150" dy="18">{getNameLines(itemData.name)[1]}</tspan>
-      {:else}
-        <tspan x="150" dy="0">{getNameLines(itemData.name)[0]}</tspan>
-      {/if}
+      {#each nameLines as line, index}
+        <tspan x="150" dy={index === 0 ? 0 : 18}>{line}</tspan>
+      {/each}
     </text>
 
     <!-- Item Description -->
-    <text x="40" y="295" font-size="14" fill="#1B2D48" opacity="0.8">
-      <tspan x="40" dy="0">{itemData.description || "No description available."}</tspan>
+    <text x="40" y="295" font-size="13" fill="#1B2D48" opacity="0.8">
+      {#each descriptionLines as line, index}
+        <tspan x="40" dy={index === 0 ? 0 : 16}>{line}</tspan>
+      {/each}
     </text>
 
     <!-- Price Tag: Gold Bar Yellow -->
