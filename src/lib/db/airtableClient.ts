@@ -690,6 +690,19 @@ export async function userSlackIdToUserRecord(slackId: string): Promise<Airtable
     });
 }
 
+export async function userRecordIdToSlackId(recordId: string): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+        base("Users").find(recordId, (error, record) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            const slackId = record?.get("slackId") as string | undefined;
+            resolve(slackId || null);
+        });
+    });
+}
+
 // Submittion workflow
 export async function sendProjectToReview(slackId: string, journeyNumber: number, HackatimeProjectName: string, screenshotUrl: string, description: string, githubUsername: string, codeUrl: string, playableUrl: string): Promise<string> {
     if (journeyNumber > 7) {
@@ -1220,4 +1233,38 @@ function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>):
         "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
         "Birthday": getFirstOrDefault(record.get("Birthday")),
     };
+}
+
+// gallery
+export async function getAllApprovedProjects(): Promise<Project[]> {
+    return new Promise<Project[]>((resolve, reject) => {
+        const collected: AirtableRecord<AirtableFieldSet>[] = [];
+        base("Projects").select({
+            filterByFormula: `{status} = 'approved'`
+        }).eachPage(
+            (records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) => {
+                collected.push(...records);
+                fetchNextPage();
+            },
+            (err: any) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const projects: Project[] = collected.map((record) => ({
+                    id: record.id as string,
+                    user: record.get("user") as string,
+                    projectName: record.get("projectName") as string,
+                    description: record.get("description") as string,
+                    codeUrl: record.get("codeUrl") as string,
+                    readmeUrl: record.get("readmeUrl") as string,
+                    demoUrl: record.get("demoUrl") as string,
+                    screenshot: record.get("screenshot") as string,
+                    hackatimeProject: record.get("hackatimeProject") as string,
+                    journeyNumber: record.get("journeyNumber") as number,
+                }));
+                resolve(projects);
+            }
+        );
+    });
 }

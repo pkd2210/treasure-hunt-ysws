@@ -80,7 +80,7 @@
         <div class="flex-1">
           <h2 class="text-2xl font-black uppercase tracking-tight leading-none mb-1">{item.name}</h2>
           <p class="text-xs font-bold opacity-70 italic leading-tight">{item.description}</p>
-          <p class="mt-2 font-black text-lg text-[#EC3750]">{item.price} Gold / item</p>
+          <p class="mt-2 font-black text-lg text-[#EC3750] flex items-center gap-0">{item.price} <img src="/assets/Gold%20Bar.webp" alt="Gold" class="h-5 w-auto object-contain" draggable="false" /> / item</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@
 
       <div class="bg-[#E8D5A0] p-4 rounded-lg border-2 border-dashed border-[#1B2D48] text-center mb-8">
         <span class="block text-xs font-bold uppercase opacity-60">Total Expenditure</span>
-        <span class="text-3xl font-black">{totalPrice} <small class="text-sm uppercase">Gold</small></span>
+        <span class="text-3xl font-black flex items-center justify-center gap-0">{totalPrice} <img src="/assets/Gold%20Bar.webp" alt="Gold" class="h-8 w-auto object-contain" draggable="false" /></span>
       </div>
 
       {#if errorMessage}
