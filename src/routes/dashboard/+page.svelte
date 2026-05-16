@@ -136,8 +136,9 @@
     </svg>
   </div>
 </div>
-<!-- make a divider -->
-<div class="divider"></div>
+<svg class="divider-svg" viewBox="0 0 800 4" preserveAspectRatio="none" style="width:80%; height:8px; display:block; margin:2rem auto; overflow:visible;">
+  <line x1="0" y1="2" x2="800" y2="2" stroke="#1B2D48" stroke-width="4" stroke-dasharray="8,8" opacity="0.3" stroke-linecap="round" />
+</svg>
 <div style="width: 100%; max-width: 900px; margin: 20px auto; filter: drop-shadow(8px 8px 0px rgba(27, 45, 72, 0.15));">
   <svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
     <!-- Main Map Background -->
@@ -244,11 +245,10 @@
       font-size: 18px !important;
     }
   }
-  .divider {
+  .divider-svg {
     width: 80%;
-    height: 2px;
-    background-color: #1B2D48;
+    height: 8px;
     margin: 2rem auto;
-    opacity: 0.3;
+    display: block;
   }
 </style>
