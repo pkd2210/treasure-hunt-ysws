@@ -22,6 +22,8 @@ export async function load({ fetch, params }) {
       }
       newProjects[p.journeyNumber].push(p);
     });
+
+    const isApproved = (project) => String(project?.status || '').trim().toUpperCase() === 'APPROVED';
     
     const isCreateable = (journeyNum) => {
       if (newProjects[journeyNum]?.length) return false;
@@ -31,7 +33,7 @@ export async function load({ fetch, params }) {
       if (!prevJourneySubmitted) return false;
       
       if (journeyNum > 2) {
-        const twoBackApproved = newProjects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
+        const twoBackApproved = newProjects[journeyNum - 2]?.some((project) => isApproved(project));
         if (!twoBackApproved) return false;
       }
       
@@ -50,7 +52,7 @@ export async function load({ fetch, params }) {
         }
         
         if (journeyNum > 2) {
-          const twoBackApproved = newProjects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
+          const twoBackApproved = newProjects[journeyNum - 2]?.some((project) => isApproved(project));
           if (!twoBackApproved) {
             return `Journey ${journeyNum - 2} must be APPROVED before you can create for Journey ${journeyNum}!`;
           }

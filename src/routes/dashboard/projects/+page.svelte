@@ -7,6 +7,9 @@
       let error = $derived(data.error);
       let isLoading = $derived(false);
 
+      const normalizedStatus = (project) => String(project?.status || '').trim().toUpperCase();
+      const isApproved = (project) => normalizedStatus(project) === 'APPROVED';
+
       const isCreateable = (journeyNum) => {
             if (projects[journeyNum]?.length) return false;
 
@@ -16,12 +19,17 @@
             if (!prevJourneySubmitted) return false;
 
             if (journeyNum > 2) {
-                  const twoBackApproved = projects[journeyNum - 2]?.some((project) => project.status === 'APPROVED');
+              const twoBackApproved = projects[journeyNum - 2]?.some((project) => isApproved(project));
                   if (!twoBackApproved) return false;
             }
 
             return true;
       };
+
+          const isLockedProject = (project) => {
+            const status = normalizedStatus(project);
+            return status === 'UNREVIEWED' || status === 'APPROVED';
+          };
 
 </script>
 <div style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.1));">
@@ -29,7 +37,7 @@
     <!-- FIXED Main Map Container - Path now closes perfectly (Z) -->
     {#each Array.from({ length: 7 }, (_, i) => i + 1) as journeyNum}
       {#if projects[journeyNum]?.length}
-        <ProjectCard number={journeyNum} project={projects[journeyNum][0]} locked={false} big={journeyNum === 7} />
+        <ProjectCard number={journeyNum} project={projects[journeyNum][0]} locked={isLockedProject(projects[journeyNum][0])} big={journeyNum === 7} />
       {:else}
             <ProjectCard number={journeyNum} create={true} locked={!isCreateable(journeyNum)} big={journeyNum === 7} />
       {/if}

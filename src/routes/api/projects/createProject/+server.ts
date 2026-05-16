@@ -1,5 +1,7 @@
 import { createProject, getSlackId, getProjects } from "$lib/db/airtableClient";
 
+const isApproved = (project: any) => String(project?.status || '').trim().toUpperCase() === 'APPROVED';
+
 const isCreateable = (journeyNum: number, projectsByJourney: Record<number, any[]>): boolean => {
     if (projectsByJourney[journeyNum]?.length) return false;
 
@@ -9,7 +11,7 @@ const isCreateable = (journeyNum: number, projectsByJourney: Record<number, any[
     if (!prevJourneySubmitted) return false;
 
     if (journeyNum > 2) {
-        const twoBackApproved = projectsByJourney[journeyNum - 2]?.some((project: any) => project.status === 'APPROVED');
+        const twoBackApproved = projectsByJourney[journeyNum - 2]?.some((project: any) => isApproved(project));
         if (!twoBackApproved) return false;
     }
 

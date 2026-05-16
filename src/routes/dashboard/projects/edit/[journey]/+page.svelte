@@ -32,6 +32,8 @@
     let demoUrl = $state('');
     let aiUsage = $state('');
 
+    const isWebUrl = (value: string) => /^https?:\/\//i.test(value.trim());
+
     // Populate from server data on initial load
     $effect(() => {
       if (data?.projectData) {
@@ -47,7 +49,7 @@
     });
 
 
-    async function sendUpdateProject() {
+    async function sendUpdateProject(redirectAfter = true) {
         try {
             const res = await fetch(`/api/projects/updateProject`, {
                 method: "POST",
@@ -65,16 +67,42 @@
                 }),
             });
             if (res.ok) {
-                goto('/dashboard/projects');
+                if (redirectAfter) {
+                  goto('/dashboard/projects');
+                }
+                return true;
             } else {
                 const errorData = await res.json();
                 alert(`Failed to update project: ${errorData.message || 'Unknown error'}`);
+                return false;
             }
         } catch (error) {
             console.error("Error updating project:", error);
             alert(`An error occurred while updating the project. Please try again later.`);
+              return false;
         }
     }
+
+          async function sendSubmitProject() {
+            const updated = await sendUpdateProject(false);
+            if (!updated) return;
+
+            try {
+              const res = await fetch(`/api/projects/submit/${journey}`, {
+                method: "GET",
+              });
+
+              if (res.ok) {
+                goto('/dashboard/projects');
+              } else {
+                const errorData = await res.json();
+                alert(`Failed to submit project: ${errorData.error || 'Unknown error'}`);
+              }
+            } catch (error) {
+              console.error("Error submitting project:", error);
+              alert(`An error occurred while submitting the project. Please try again later.`);
+            }
+          }
 </script>
 
 
@@ -118,10 +146,24 @@
       <foreignObject x="0" y="305" width="310" height="40">
       <input bind:value={readmeUrl} type="text" id="readmeUrl" placeholder="https://github.com/hackclub/randomproject/readme.md" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
       </foreignObject>
+      <foreignObject x="0" y="348" width="310" height="24">
+        {#if isWebUrl(readmeUrl)}
+          <a href={readmeUrl} target="_blank" rel="noreferrer" style="font-family: 'Luckiest Guy', cursive; font-size: 12px; color: #1B2D48; text-decoration: underline;">
+            Open README
+          </a>
+        {/if}
+      </foreignObject>
 
       <text x="330" y="295" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">DEMO URL</text>
       <foreignObject x="330" y="305" width="310" height="40">
       <input bind:value={demoUrl} type="text" id="demoUrl" placeholder="https://hackclub.com" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
+      </foreignObject>
+      <foreignObject x="330" y="348" width="310" height="24">
+        {#if isWebUrl(demoUrl)}
+          <a href={demoUrl} target="_blank" rel="noreferrer" style="font-family: 'Luckiest Guy', cursive; font-size: 12px; color: #1B2D48; text-decoration: underline;">
+            Open Demo
+          </a>
+        {/if}
       </foreignObject>
 
       <!-- Screenshot Upload Area -->
@@ -166,7 +208,7 @@
       </foreignObject>
 
       <!-- Submit Button Placeholder (Matching your Dashboard style) -->
-      <foreignObject x="195" y="735" width="263" height="46">
+      <foreignObject x="60" y="735" width="263" height="46">
         <button
           type="button"
           onclick={() => sendUpdateProject()}
@@ -174,6 +216,16 @@
           style="width: 100%; height: 100%; border: 3px solid #1B2D48; border-radius: 18px 8px 20px 10px; background: #FFB400; color: #1B2D48; font-family: 'Luckiest Guy', cursive; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);"
         >
           UPDATE
+        </button>
+      </foreignObject>
+      <foreignObject x="325" y="735" width="263" height="46">
+        <button
+          type="button"
+          onclick={() => sendSubmitProject()}
+          data-sveltekit-preload-data="eager"
+          style="width: 100%; height: 100%; border: 3px solid #1B2D48; border-radius: 10px 20px 8px 18px; background: #3E6B4B; color: #F6F2E8; font-family: 'Luckiest Guy', cursive; font-size: 16px; letter-spacing: 0.6px; font-weight: 900; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);"
+        >
+          SUBMIT
         </button>
       </foreignObject>
     </g>

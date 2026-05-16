@@ -14,6 +14,9 @@ export async function completeJourney(slackId: string, journeyNumber: number) {
         throw new Error(`User with slackId ${slackId} not found`);
     }
 
+    const currentJourneyNumber = Number(userRecord.get("journeyNumber") ?? 0);
+    const nextJourneyNumber = Math.max(currentJourneyNumber, journeyNumber + 1);
+
     // we need to do a few things:
     // check if the journey humber isn't larger then 7
     //if (journeyNumber > 7) {
@@ -34,8 +37,10 @@ export async function completeJourney(slackId: string, journeyNumber: number) {
     // 2. send project into review.
     // 3. add them to the completers list of the journey
     await addToCompleters(journeyNumber, userRecord.id);
-    // 3.5. Bump journeyNumber in the users table by 1
-    await updateJourneyNumber(slackId, journeyNumber + 1);
+    // 3.5. Bump journeyNumber only forward, never backwards when backfilling older journeys
+    if (nextJourneyNumber > currentJourneyNumber) {
+        await updateJourneyNumber(slackId, nextJourneyNumber);
+    }
     // ~4. once project approved add them the goldbars and send them the order - do in review workflow~
     // 5. dm them about there project wen't into review
     // ~6. dm them when project was approved or rejected- do in review workflow~

@@ -34,6 +34,8 @@
     let demoUrl = $state('');
     let aiUsage = $state('');
 
+    const isWebUrl = (value) => /^https?:\/\//i.test(String(value).trim());
+
     async function createProject() {
         const projectName = document.getElementById('projectName')?.value || '';
         const description = document.getElementById('description')?.value || '';
@@ -125,10 +127,24 @@
       <foreignObject x="0" y="305" width="310" height="40">
       <input type="text" id="readmeUrl" placeholder="https://github.com/hackclub/randomproject/readme.md" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
       </foreignObject>
+      <foreignObject x="0" y="348" width="310" height="24">
+        {#if isWebUrl(readmeUrl)}
+          <a href={readmeUrl} target="_blank" rel="noreferrer" style="font-family: 'Luckiest Guy', cursive; font-size: 12px; color: #1B2D48; text-decoration: underline;">
+            Open README
+          </a>
+        {/if}
+      </foreignObject>
 
       <text x="330" y="295" font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48">DEMO URL</text>
       <foreignObject x="330" y="305" width="310" height="40">
       <input type="text" id="demoUrl" placeholder="https://hackclub.com" style="width: 100%; height: 100%; background: #E8D5A0; border: 2px solid #1B2D48; border-radius: 8px; padding: 0 10px; box-sizing: border-box;" />
+      </foreignObject>
+      <foreignObject x="330" y="348" width="310" height="24">
+        {#if isWebUrl(demoUrl)}
+          <a href={demoUrl} target="_blank" rel="noreferrer" style="font-family: 'Luckiest Guy', cursive; font-size: 12px; color: #1B2D48; text-decoration: underline;">
+            Open Demo
+          </a>
+        {/if}
       </foreignObject>
 
       <!-- Screenshot Upload Area -->

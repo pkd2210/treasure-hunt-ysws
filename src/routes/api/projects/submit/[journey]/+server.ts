@@ -24,6 +24,19 @@ export async function GET({ params, request }) {
     }
     catch (error) {
         console.error("Error submitting project:", error);
-        return new Response(JSON.stringify({ error: "Failed to submit project" }), { status: 500 });
+        const message =
+            (typeof error === "object" && error !== null && "message" in error && typeof (error as any).message === "string")
+                ? (error as any).message
+                : (error instanceof Error ? error.message : "Failed to submit project");
+        const isUserInputError =
+            message.includes("not found") ||
+            message.includes("not eligible") ||
+            message.includes("already been submitted") ||
+            message.includes("missing a code URL") ||
+            message.includes("must be a GitHub repository URL") ||
+            message.includes("Invalid attachment object") ||
+            message.includes("missing a screenshot URL");
+
+        return new Response(JSON.stringify({ error: message }), { status: isUserInputError ? 400 : 500 });
     }
 }

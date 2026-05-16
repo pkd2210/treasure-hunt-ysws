@@ -725,10 +725,6 @@ export async function sendProjectToReview(slackId: string, journeyNumber: number
     if (!journey) {
         throw new Error(`Journey with number ${journeyNumber} not found`);
     }
-    const completers = journey.completers || [];
-    if (completers.includes(userRecord.id)) {
-        throw new Error("You have already completed this journey");
-    }
 
     const submissionId = await new Promise<string>((resolve, reject) => {
         base("Submissions").create(
@@ -840,7 +836,7 @@ export async function updateProject(slackId: string, journeyNumber: number, upda
             }
             
             const recordId = project.id;
-            base("Projects").update(recordId, updatedFields as any, (updateErr) => {
+            base("Projects").update(recordId, updatedFields as any, (updateErr: unknown) => {
                 if (updateErr) {
                     reject(updateErr);
                     return;
@@ -987,7 +983,21 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 reject(error);
                 return;
             }
+            const rawScreenshot = record.get("screenshot") as any;
+            let screenshotUrl = "";
+            if (typeof rawScreenshot === "string") {
+                screenshotUrl = rawScreenshot;
+            } else if (Array.isArray(rawScreenshot) && rawScreenshot.length > 0) {
+                const first = rawScreenshot[0];
+                if (typeof first === "string") {
+                    screenshotUrl = first;
+                } else if (first && typeof first === "object") {
+                    screenshotUrl = first.url || first.thumbnails?.full?.url || first.thumbnails?.large?.url || "";
+                }
+            }
+
             const project: Project = {
+                id: record.id,
                 user: record.get("user") as string,
                 status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
                 projectName: record.get("projectName") as string,
@@ -995,7 +1005,7 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 codeUrl: record.get("codeUrl") as string,
                 readmeUrl: record.get("readmeUrl") as string,
                 demoUrl: record.get("demoUrl") as string,
-                screenshot: record.get("screenshot") as string,
+                screenshot: screenshotUrl,
                 aiUsage: record.get("aiUsage") as string,
                 hackatimeProject: record.get("hackatimeProject") as string,
                 journeyNumber: record.get("journeyNumber") as number,
@@ -1018,6 +1028,16 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 return;
             }
 
+            if (!project.codeUrl || typeof project.codeUrl !== "string") {
+                reject(new Error("Project is missing a code URL. Please update your project before submitting."));
+                return;
+            }
+
+            if (!project.screenshot || typeof project.screenshot !== "string") {
+                reject(new Error("Project is missing a screenshot URL. Please update your project before submitting."));
+                return;
+            }
+
             // check if project was submitted to another ysws already
             const manifestUrl = "https://manifest.hackclub.com/api/lookup?codeUrl=";
             const finalUrl = manifestUrl + encodeURIComponent(project.codeUrl);
@@ -1033,9 +1053,12 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 reject(new Error("Error checking project submission status. Please try again later."));
                 return;
             }
-
-
-            const githubUsername = project.codeUrl.split("/").slice(-2, -1)[0];
+            const githubMatch = project.codeUrl.match(/github\.com\/([^/]+)/i);
+            const githubUsername = githubMatch?.[1] || "";
+            if (!githubUsername) {
+                reject(new Error("Project code URL must be a GitHub repository URL before submission."));
+                return;
+            }
             sendProjectToReview(slackId, project.journeyNumber, project.projectName, project.screenshot, project.description, githubUsername, project.codeUrl, project.demoUrl).then((submissionRecordId) => {
                 base("Submissions").find(submissionRecordId, (subFetchErr, submissionRecord) => {
                     if (subFetchErr) {
