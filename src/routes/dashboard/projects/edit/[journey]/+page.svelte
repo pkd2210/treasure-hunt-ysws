@@ -32,6 +32,10 @@
     let demoUrl = $state('');
     let aiUsage = $state('');
 
+    // Prevent double submits
+    let isUpdating = $state(false);
+    let isSubmitting = $state(false);
+
     const isWebUrl = (value: string) => /^https?:\/\//i.test(value.trim());
 
     // Populate from server data on initial load
@@ -50,6 +54,8 @@
 
 
     async function sendUpdateProject(redirectAfter = true) {
+        if (isUpdating) return false;
+        isUpdating = true;
         try {
             const res = await fetch(`/api/projects/updateProject`, {
                 method: "POST",
@@ -80,12 +86,26 @@
             console.error("Error updating project:", error);
             alert(`An error occurred while updating the project. Please try again later.`);
               return false;
+        } finally {
+            isUpdating = false;
         }
     }
 
           async function sendSubmitProject() {
+            if (isSubmitting) return;
+
+            // Client-side validation: ensure ALL fields are present before submitting
+            if (!projectName || !description || !codeUrl || !readmeUrl || !demoUrl || !screenshotUrl || !aiUsage || !hackatimeProjectValue) {
+                alert('Please fill in ALL fields (Project Name, Description, Code URL, README URL, Demo URL, Screenshot, AI Usage, and Hackatime Project) before submitting.');
+                return;
+            }
+
+            isSubmitting = true;
             const updated = await sendUpdateProject(false);
-            if (!updated) return;
+            if (!updated) {
+                isSubmitting = false;
+                return;
+            }
 
             try {
               const res = await fetch(`/api/projects/submit/${journey}`, {
@@ -101,6 +121,8 @@
             } catch (error) {
               console.error("Error submitting project:", error);
               alert(`An error occurred while submitting the project. Please try again later.`);
+            } finally {
+              isSubmitting = false;
             }
           }
 </script>
@@ -212,20 +234,22 @@
         <button
           type="button"
           onclick={() => sendUpdateProject()}
+          disabled={isUpdating}
           data-sveltekit-preload-data="eager"
           style="width: 100%; height: 100%; border: 3px solid #1B2D48; border-radius: 18px 8px 20px 10px; background: #FFB400; color: #1B2D48; font-family: 'Luckiest Guy', cursive; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);"
         >
-          UPDATE
+          {#if isUpdating}UPDATING...{:else}UPDATE{/if}
         </button>
       </foreignObject>
       <foreignObject x="325" y="735" width="263" height="46">
         <button
           type="button"
           onclick={() => sendSubmitProject()}
+          disabled={isSubmitting}
           data-sveltekit-preload-data="eager"
           style="width: 100%; height: 100%; border: 3px solid #1B2D48; border-radius: 10px 20px 8px 18px; background: #3E6B4B; color: #F6F2E8; font-family: 'Luckiest Guy', cursive; font-size: 16px; letter-spacing: 0.6px; font-weight: 900; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);"
         >
-          SUBMIT
+          {#if isSubmitting}SUBMITTING...{:else}SUBMIT{/if}
         </button>
       </foreignObject>
     </g>

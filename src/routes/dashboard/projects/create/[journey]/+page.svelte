@@ -34,20 +34,26 @@
     let demoUrl = $state('');
     let aiUsage = $state('');
 
-    const isWebUrl = (value) => /^https?:\/\//i.test(String(value).trim());
+    // Prevent double submits from spam clicking
+    let isCreating = $state(false);
+
+    const isWebUrl = (value: string) => /^https?:\/\//i.test(String(value).trim());
 
     async function createProject() {
-        const projectName = document.getElementById('projectName')?.value || '';
-        const description = document.getElementById('description')?.value || '';
-      const codeUrl = document.getElementById('codeUrl')?.value || '';
-        const readmeUrl = document.getElementById('readmeUrl')?.value || '';
-        const demoUrl = document.getElementById('demoUrl')?.value || '';
+        if (isCreating) return;
+        isCreating = true;
+        const projectName = (document.getElementById('projectName') as HTMLInputElement)?.value || '';
+        const description = (document.getElementById('description') as HTMLTextAreaElement)?.value || '';
+        const codeUrl = (document.getElementById('codeUrl') as HTMLInputElement)?.value || '';
+        const readmeUrl = (document.getElementById('readmeUrl') as HTMLInputElement)?.value || '';
+        const demoUrl = (document.getElementById('demoUrl') as HTMLInputElement)?.value || '';
         const screenshot = screenshotUrl;
-        const aiUsage = document.getElementById('aiUsage')?.value || '';
+        const aiUsage = (document.getElementById('aiUsage') as HTMLTextAreaElement)?.value || '';
         const hackatimeProject = hackatimeProjectValue;
 
-        if (!projectName || !description) {
-            alert("Please fill in at least project name and description");
+        if (!projectName || !description || !codeUrl || !readmeUrl || !demoUrl || !screenshot || !aiUsage || !hackatimeProject) {
+            alert("Please fill in ALL fields (Project Name, Description, Code URL, README URL, Demo URL, Screenshot, AI Usage, and Hackatime Project)");
+            isCreating = false;
             return;
         }
 
@@ -80,7 +86,9 @@
                 alert(`Failed to create project: ${error || response.statusText}`);
             }
         } catch (error) {
-            alert(`Error: ${error.message}`);
+            alert(`Error: ${(error as any)?.message || String(error)}`);
+        } finally {
+            isCreating = false;
         }
     }
 </script>
@@ -185,10 +193,11 @@
         <button
           type="button"
           onclick={() => createProject()}
+          disabled={isCreating}
           data-sveltekit-preload-data="eager"
           style="width: 100%; height: 100%; border: 3px solid #1B2D48; border-radius: 18px 8px 20px 10px; background: #FFB400; color: #1B2D48; font-family: 'Luckiest Guy', cursive; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);"
         >
-          CREATE
+          {#if isCreating}CREATING...{:else}CREATE{/if}
         </button>
       </foreignObject>
     </g>
