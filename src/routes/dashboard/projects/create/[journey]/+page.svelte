@@ -51,8 +51,8 @@
         const aiUsage = (document.getElementById('aiUsage') as HTMLTextAreaElement)?.value || '';
         const hackatimeProject = hackatimeProjectValue;
 
-        if (!projectName || !description || !codeUrl || !readmeUrl || !demoUrl || !screenshot || !aiUsage || !hackatimeProject) {
-            alert("Please fill in ALL fields (Project Name, Description, Code URL, README URL, Demo URL, Screenshot, AI Usage, and Hackatime Project)");
+        if (!projectName || !description) {
+            alert("Please fill in Project Name and Description");
             isCreating = false;
             return;
         }

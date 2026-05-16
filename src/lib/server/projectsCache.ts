@@ -55,3 +55,7 @@ export async function getOrSetRelay<T>(
 export function clearCache() {
     cache.clear();
 }
+
+export function clearCacheKey(key: string) {
+    cache.delete(key);
+}

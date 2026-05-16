@@ -1,4 +1,5 @@
 import { submitProjectForReview, getProjects, getSlackId } from "$lib/db/airtableClient";
+import { clearCacheKey } from "$lib/server/projectsCache";
 
 export async function GET({ params, request }) {
     try {
@@ -20,6 +21,9 @@ export async function GET({ params, request }) {
         }
 
         await submitProjectForReview(slackId, project.id);
+        
+        clearCacheKey(`projects:${slackId}`);
+        
         return new Response(JSON.stringify({ ok: true, journey: journeyNumber, projectId: project.id }), { status: 200 });
     }
     catch (error) {

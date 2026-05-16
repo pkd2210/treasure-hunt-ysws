@@ -1,4 +1,5 @@
 import { updateProject, getSlackId, getProjects } from "$lib/db/airtableClient";
+import { clearCacheKey } from "$lib/server/projectsCache";
 
 export async function POST({ request }) {
     try {
@@ -11,6 +12,9 @@ export async function POST({ request }) {
 
         const updatedProject = { projectName, description, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject };
         await updateProject(slackId, journeyNumber, updatedProject as any);
+        
+        clearCacheKey(`projects:${slackId}`);
+        
         return new Response(JSON.stringify(updatedProject), { status: 200 });
     }
     catch (error) {

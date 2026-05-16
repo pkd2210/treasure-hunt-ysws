@@ -1,4 +1,5 @@
 import { createProject, getSlackId, getProjects } from "$lib/db/airtableClient";
+import { clearCacheKey } from "$lib/server/projectsCache";
 
 const isApproved = (project: any) => String(project?.status || '').trim().toUpperCase() === 'APPROVED';
 
@@ -43,6 +44,9 @@ export async function POST({ request }) {
 
         const newProject = { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject };
         const projectId = await createProject(slackId, newProject as any);
+        
+        clearCacheKey(`projects:${slackId}`);
+        
         return new Response(JSON.stringify(newProject), { status: 201 });
     } catch (error) {
         console.error("Error creating project:", error);
