@@ -1,6 +1,6 @@
-import { getSlackId, isAdmin } from "$lib/db/airtableClient";
+import { getSlackId, isAdmin, isReviewer } from "$lib/db/airtableClient";
 import { HCA_CLIENT_ID, HCA_CLIENT_SECRET } from "$env/static/private";
-import type { Handle } from '@sveltejs/kit';
+import { redirect, type Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
     let slackId = await getSlackId(event.request);
@@ -59,6 +59,15 @@ export const handle: Handle = async ({ event, resolve }) => {
             if (!(await isAdmin(slackId))) {
                 return new Response('Unauthorized', { status: 401 });
             }
+        }
+    }
+    if (event.url.pathname.startsWith('/dashboard')) {
+        if (!slackId) {
+            throw redirect(303, '/');
+        }
+
+        if (event.url.pathname.startsWith('/dashboard/review') && !(await isReviewer(slackId))) {
+            throw redirect(303, '/dashboard');
         }
     }
     return resolve(event);

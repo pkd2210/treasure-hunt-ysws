@@ -1,18 +1,25 @@
 <script lang=ts>
   import { page } from '$app/stores';
-  import { on } from 'svelte/events';
   import Button from './button.svelte';
   let isMobileOpen = $state(false);
   
-  let { slackId = '', displayName = '', avatarUrl = '', goldBars = 0 } = $props();
+  let { slackId = '', displayName = '', avatarUrl = '', goldBars = 0, isReviewerUser = false } = $props();
   
-  const navItems = [
+  const navItems = $derived.by(() => {
+    const items = [
     { label: 'Home', href: '/dashboard'},
     { label: 'Shop', href: '/dashboard/shop'},
     { label: 'Projects', href: '/dashboard/projects'},
     { label: 'Gallery', href: '/dashboard/gallery'},
     { label: 'Settings', href: '/dashboard/settings'},
-  ];
+    ];
+
+    if (isReviewerUser) {
+      items.push({ label: 'Review', href: '/dashboard/review' });
+    }
+
+    return items;
+  });
 </script>
 
 <div class="sidebar-container">
@@ -115,33 +122,6 @@
     position: relative;
   }
 
-  .sidebar-header h2 {
-    margin: 0;
-    font-family: 'Luckiest Guy', cursive;
-    color: #ffe4b5;
-    font-size: 1.25rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    -webkit-text-stroke: 0.5px #3a1e10;
-    text-align: center;
-  }
-
-  .close-btn {
-    display: none;
-    background: none;
-    border: none;
-    color: #ffe4b5;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    width: 2rem;
-    height: 2rem;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-  }
-
   .nav-list {
     list-style: none;
     padding: 1rem 0;
@@ -152,50 +132,6 @@
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-  }
-
-  .nav-list li {
-    padding: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    color: #ffe4b5;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border-left: 4px solid transparent;
-    font-weight: 500;
-  }
-
-  .nav-item:hover {
-    background-color: rgba(255, 228, 181, 0.1);
-    border-left-color: #E8BB35;
-    padding-left: 1.75rem;
-  }
-
-  .nav-item.active {
-    background-color: rgba(232, 187, 53, 0.2);
-    border-left-color: #E8BB35;
-    color: #FFB400;
-    font-weight: 600;
-  }
-
-  .nav-icon {
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-  }
-
-  .nav-label {
-    flex: 1;
   }
 
   .sidebar-footer {
@@ -268,17 +204,6 @@
     display: block;
   }
 
-  .overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 40;
-  }
-
   /* Mobile Styles */
   @media (max-width: 768px) {
     .mobile-toggle {
@@ -305,16 +230,5 @@
       transform: translateX(0);
     }
 
-    .overlay {
-      display: block;
-    }
-
-    .overlay.hidden {
-      display: none;
-    }
-
-    .close-btn {
-      display: flex;
-    }
   }
 </style>
