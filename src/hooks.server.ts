@@ -65,9 +65,15 @@ export const handle: Handle = async ({ event, resolve }) => {
         if (!slackId) {
             throw redirect(303, '/');
         }
+    }
 
-        if (event.url.pathname.startsWith('/dashboard/review') && !(await isReviewer(slackId))) {
-            throw redirect(303, '/dashboard');
+    if (event.url.pathname.startsWith('/review')) {
+        if (!slackId) {
+            throw redirect(303, '/');
+        }
+
+        if (!(await isReviewer(slackId))) {
+            throw redirect(303, '/');
         }
     }
     return resolve(event);

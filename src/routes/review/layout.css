@@ -1,0 +1,39 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn-svelte/tailwind.css";
+@import "@fontsource-variable/inter";
+
+@theme inline {
+	--color-background: #F3E1AD;
+	--color-foreground: #1B2D48;
+	--color-card: #E8D5A0;
+	--color-card-foreground: #1B2D48;
+	--color-popover: #F3E1AD;
+	--color-popover-foreground: #1B2D48;
+	--color-primary: #FFB400;
+	--color-primary-foreground: #1B2D48;
+	--color-secondary: #E8D5A0;
+	--color-secondary-foreground: #1B2D48;
+	--color-muted: #E8D5A0;
+	--color-muted-foreground: #1B2D48;
+	--color-accent: #EC3750;
+	--color-accent-foreground: #F3E1AD;
+	--color-destructive: #EC3750;
+	--color-destructive-foreground: #F3E1AD;
+	--color-border: #1B2D48;
+	--color-input: #1B2D48;
+	--color-ring: #EC3750;
+	--radius: 0.625rem;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+	html {
+		@apply font-sans;
+	}
+}

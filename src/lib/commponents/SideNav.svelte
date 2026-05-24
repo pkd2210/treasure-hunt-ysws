@@ -15,7 +15,7 @@
     ];
 
     if (isReviewerUser) {
-      items.push({ label: 'Review', href: '/dashboard/review' });
+      items.push({ label: 'Review', href: '/review' });
     }
 
     return items;
