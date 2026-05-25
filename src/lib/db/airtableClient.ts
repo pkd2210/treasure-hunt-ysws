@@ -8,6 +8,7 @@ import { completeJourney } from "$lib/rewards/complete";
 import { get } from "node:http";
 import { send } from "node:process";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
+const CLAIM_DURATION_MS = 30 * 60 * 1000;
 
 // General get records
 async function getUserRecords(slackId?: string, request?: Request): Promise<AirtableRecord<AirtableFieldSet> | null> {
@@ -1289,7 +1290,42 @@ function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>):
         "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
         "Birthday": getFirstOrDefault(record.get("Birthday")),
         "claimedBy": record.get("claimedBy") as string,
+        "claimedAt": getFirstOrDefault(record.get("claimedAt")),
     };
+}
+
+function getClaimStatus(record: AirtableRecord<AirtableFieldSet>): { claimedBy: string; claimedAt: string; remainingMs: number; isExpired: boolean } {
+    const claimedBy = (record.get("claimedBy") as string | undefined) || "";
+    const claimedAt = getFirstOrDefault(record.get("claimedAt"));
+    if (!claimedBy || !claimedAt) {
+        return { claimedBy: "", claimedAt: "", remainingMs: 0, isExpired: false };
+    }
+
+    const claimedAtMs = Date.parse(claimedAt);
+    if (!Number.isFinite(claimedAtMs)) {
+        return { claimedBy: "", claimedAt: "", remainingMs: 0, isExpired: true };
+    }
+
+    const expiresAt = claimedAtMs + CLAIM_DURATION_MS;
+    const remainingMs = expiresAt - Date.now();
+    return {
+        claimedBy,
+        claimedAt,
+        remainingMs: Math.max(0, remainingMs),
+        isExpired: remainingMs <= 0,
+    };
+}
+
+function clearClaim(recordId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        base("Submissions").update(recordId, { claimedBy: "", claimedAt: "" }, (updateError) => {
+            if (updateError) {
+                reject(updateError);
+                return;
+            }
+            resolve();
+        });
+    });
 }
 
 // gallery
@@ -1390,18 +1426,28 @@ export async function claimSubmission(submissionId: string, adminSlackId: string
                 reject(new Error("Submission not found"));
                 return;
             }
-            const claimedBy = record.get("claimedBy") as string | undefined;
-            if (claimedBy) {
-                reject(new Error("Submission is already claimed by another admin"));
+            const claimStatus = getClaimStatus(record);
+            const continueClaim = () => {
+                base("Submissions").update(record.id, { claimedBy: adminSlackId, claimedAt: new Date().toISOString() }, (updateError) => {
+                    if (updateError) {
+                        reject(updateError);
+                        return;
+                    }
+                    resolve();
+                });
+            };
+
+            if (!claimStatus.claimedBy) {
+                continueClaim();
                 return;
             }
-            base("Submissions").update(record.id, { claimedBy: adminSlackId }, (updateError) => {
-                if (updateError) {
-                    reject(updateError);
-                    return;
-                }
-                resolve();
-            });
+
+            if (claimStatus.isExpired) {
+                clearClaim(record.id).then(continueClaim).catch(reject);
+                return;
+            }
+
+            reject(new Error("Submission is already claimed by another admin"));
         }).catch((error) => {
             reject(error);
         });
@@ -1415,13 +1461,7 @@ export async function unclaimSubmission(submissionId: string): Promise<void> {
                 reject(new Error("Submission not found"));
                 return;
             }
-            base("Submissions").update(record.id, { claimedBy: "" }, (updateError) => {
-                if (updateError) {
-                    reject(updateError);
-                    return;
-                }
-                resolve();
-            });
+            clearClaim(record.id).then(resolve).catch(reject);
         }).catch((error) => {
             reject(error);
         });
@@ -1433,6 +1473,15 @@ export async function getClaimedSubmission(submissionId: string): Promise<Submis
         findSubmissionRecord(submissionId).then((record) => {
             if (!record) {
                 resolve(null);
+                return;
+            }
+            const claimStatus = getClaimStatus(record);
+            if (!claimStatus.claimedBy) {
+                resolve(null);
+                return;
+            }
+            if (claimStatus.isExpired) {
+                clearClaim(record.id).then(() => resolve(null)).catch(reject);
                 return;
             }
             const submission = submissionRecordToSubmission(record);

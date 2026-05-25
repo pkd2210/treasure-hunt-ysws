@@ -84,6 +84,7 @@ export type Submission = {
     "ZIP / Postal Code": string;
     "Birthday": string;
     "claimedBy": string;
+    "claimedAt": string;
 }
 
 export type Project = {

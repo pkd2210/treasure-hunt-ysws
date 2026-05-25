@@ -24,7 +24,66 @@ const id = $page.params.id;
     let trustLevel = $state("");
     let finalHoursinHours = $state("");
     let slackId = $state("");
+    let claimedBy = $state("");
+    let currentSlackId = $state("");
+    let claimedExpiresAt = $state("");
+    let claimBusy = $state(false);
+    let claimClock = $state(Date.now());
     let showDisplayName = $state(false);
+
+    const isClaimedByMe = () => Boolean(claimedBy) && claimedBy === currentSlackId;
+    const isLocked = () => Boolean(claimedBy) && !isClaimedByMe();
+    const formatRemainingTime = (remainingMs) => {
+      const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+    };
+    const getRemainingMs = () => {
+      const expiresAt = claimedExpiresAt ? Date.parse(claimedExpiresAt) : 0;
+      return expiresAt ? Math.max(0, expiresAt - claimClock) : 0;
+    };
+    const claimButtonLabel = () => {
+      if (isClaimedByMe()) return "UNCLAIM REVIEW";
+      if (isLocked()) return "LOCKED";
+      return "CLAIM REVIEW";
+    };
+
+    const loadClaimState = async () => {
+      try {
+        const response = await fetch(`/api/review/getClaimer/${id}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            claimedBy = "";
+            return;
+          }
+          throw new Error(await response.text());
+        }
+        const data = await response.json();
+        claimedBy = data.claimedBy || "";
+        currentSlackId = data.slackId || "";
+        claimedExpiresAt = data.expiresAt || "";
+      } catch (error) {
+        console.error("Error fetching claim state:", error);
+      }
+    };
+
+    const toggleClaim = async () => {
+      if (claimBusy || isLocked()) return;
+      claimBusy = true;
+      try {
+        const endpoint = isClaimedByMe() ? `/api/review/unclaim/${id}` : `/api/review/claim/${id}`;
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        await loadClaimState();
+      } catch (error) {
+        console.error("Error toggling claim:", error);
+      } finally {
+        claimBusy = false;
+      }
+    };
 
     // get hours trhourgh https://hackatime.hackclub.com/api/v1/users/U091DE0M4NB/stats?features=projects&start_date=2026-03-04
     const fetchHours = async () => {
@@ -48,6 +107,10 @@ const id = $page.params.id;
 
     onMount(() => {
       showDisplayName = true;
+      void loadClaimState();
+      const claimClockInterval = setInterval(() => {
+        claimClock = Date.now();
+      }, 1000);
         let projectsRequest = fetch('/api/review/getPending')
             .then(response => response.json())
             .then(data => {
@@ -66,6 +129,7 @@ const id = $page.params.id;
               fetchHours();
           }
         });
+          return () => clearInterval(claimClockInterval);
     });
         let justification = $state("");
     let checklist = {
@@ -75,7 +139,20 @@ const id = $page.params.id;
     };
 </script>
 
-<form action="?/review" method="POST" style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.15));">
+<form action="?/review" method="POST" style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.15)); position: relative;">
+  <button type="button" onclick={toggleClaim} disabled={isLocked() || claimBusy} style="position: absolute; top: 55px; right: 70px; z-index: 3; width: 220px; height: 45px; background: #FFB400; border: 3px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #1B2D48;">
+    {claimBusy ? "..." : claimButtonLabel()}
+  </button>
+  {#if claimedBy}
+    <div style="position: absolute; top: 106px; right: 70px; z-index: 3; width: 220px; font-family: monospace; font-size: 11px; font-weight: 900; color: #1B2D48; text-align: center; background: rgba(232, 213, 160, 0.98); border: 2px solid #1B2D48; border-radius: 9999px; padding: 4px 8px;">
+      {#if isClaimedByMe()}
+        claimed by you · {formatRemainingTime(getRemainingMs())} left
+      {:else}
+        locked by {claimedBy} · {formatRemainingTime(getRemainingMs())} left
+      {/if}
+    </div>
+  {/if}
+  <div style:opacity={isClaimedByMe() ? 1 : 0.5} style:pointer-events={isClaimedByMe() ? "auto" : "none"}>
   <svg viewBox="0 0 1000 1450" xmlns="http://www.w3.org/2000/svg" style="display: block;">
     
     <path d="M40,50 Q60,20 200,30 L800,20 Q970,30 960,110 L980,1360 Q950,1440 800,1430 L160,1450 Q40,1440 55,1310 L30,310 Q25,70 40,50 Z" 
@@ -85,12 +162,6 @@ const id = $page.params.id;
           stroke-linejoin="round" />
 
     <text x="70" y="90" font-family="'Comic Sans MS', 'Chalkboard SE', sans-serif" font-weight="900" font-size="34" fill="#1B2D48">REVIEW CHECK</text>
-    
-    <foreignObject x="700" y="55" width="220" height="60">
-      <button type="submit" name="action" value="claim" style="width: 100%; height: 45px; background: #FFB400; border: 3px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #1B2D48;">
-        CLAIM REVIEW
-      </button>
-    </foreignObject>
 
     <line x1="70" y1="120" x2="930" y2="120" stroke="#1B2D48" stroke-width="3" stroke-dasharray="10,5" opacity="0.3" />
 
@@ -193,6 +264,7 @@ const id = $page.params.id;
     </foreignObject>
 
   </svg>
+  </div>
 </form>
 
 <style>

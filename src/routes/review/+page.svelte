@@ -6,11 +6,68 @@
     import { onMount } from 'svelte';
 
     let projects = $state([]);
+    let claimStates = $state({});
+    let currentSlackId = $state("");
+    let claimClock = $state(Date.now());
+
+    const formatRemainingTime = (remainingMs) => {
+        const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+    };
+
+    const loadClaimStates = async (fetchedProjects) => {
+        const entries = await Promise.all(fetchedProjects.map(async (project) => {
+            try {
+                const response = await fetch(`/api/review/getClaimer/${project.id}`);
+                if (!response.ok) {
+                    return [project.id, null];
+                }
+                return [project.id, await response.json()];
+            } catch {
+                return [project.id, null];
+            }
+        }));
+        claimStates = Object.fromEntries(entries);
+    };
+
+    const getClaimState = (projectId) => claimStates[projectId] ?? null;
+    const isClaimedBySomeoneElse = (project) => {
+        const claimState = getClaimState(project.id);
+        return Boolean(claimState?.claimedBy) && claimState.claimedBy !== currentSlackId;
+    };
+    const isClaimedByMe = (project) => {
+        const claimState = getClaimState(project.id);
+        return Boolean(claimState?.claimedBy) && claimState.claimedBy === currentSlackId;
+    };
+    const claimSummary = (project) => {
+        const claimState = getClaimState(project.id);
+        if (!claimState?.claimedBy) {
+            return "unclaimed";
+        }
+        const expiresAt = claimState.expiresAt ? Date.parse(claimState.expiresAt) : 0;
+        const remainingMs = expiresAt ? Math.max(0, expiresAt - claimClock) : claimState.remainingMs ?? 0;
+        const ownerLabel = claimState.claimedBy === currentSlackId ? "claimed by you" : `claimed by ${claimState.claimedBy}`;
+        return `${ownerLabel} · ${formatRemainingTime(remainingMs)} left`;
+    };
 
     // preload dashboard
     onMount(() => {
         preloadData('/dashboard');
         preloadCode('/dashboard');
+        const claimClockInterval = setInterval(() => {
+            claimClock = Date.now();
+        }, 1000);
+        fetch('/api/me')
+            .then(response => response.ok ? response.json() : null)
+            .then(data => {
+                currentSlackId = data?.slackId || "";
+            })
+            .catch(() => {
+                currentSlackId = "";
+            });
+        return () => clearInterval(claimClockInterval);
     });
 //    const projects = [
 //        {
@@ -57,6 +114,7 @@
             });
         projectsRequest.then(fetchedProjects => {
             projects = fetchedProjects;
+            void loadClaimStates(fetchedProjects);
         });
     });
 
@@ -109,13 +167,25 @@
 <div class="mt-4 flex flex-col gap-4">
 {#if $activeType === "all"}
     {#each projects.filter(project => project.status === "pending") as project}
-    <a href={`/review/${project.id}`}>
-        <div class="p-4 rounded-md border border-border bg-secondary">
+    {#if isClaimedBySomeoneElse(project)}
+        <div class="p-4 rounded-md border border-border bg-secondary opacity-50">
             <div class="font-bold text-primary-foreground">{project.projectName}</div>
             <div class="text-sm text-foreground/80">{project.description}</div>
             <div class="mt-2 text-xs text-foreground/70">type: {project.type} — journey {project.journeyNumber}</div>
+            <div class="mt-2 text-xs font-semibold text-foreground/80">{claimSummary(project)}</div>
         </div>
-    </a>
+    {:else}
+        <a href={`/review/${project.id}`}>
+            <div class="p-4 rounded-md border border-border bg-secondary">
+                <div class="font-bold text-primary-foreground">{project.projectName}</div>
+                <div class="text-sm text-foreground/80">{project.description}</div>
+                <div class="mt-2 text-xs text-foreground/70">type: {project.type} — journey {project.journeyNumber}</div>
+                {#if isClaimedByMe(project)}
+                    <div class="mt-2 text-xs font-semibold text-foreground/80">{claimSummary(project)}</div>
+                {/if}
+            </div>
+        </a>
+    {/if}
     {/each}
 {:else if $activeType === "stats"}
     <div class="p-4 rounded-md border border-border bg-secondary">
@@ -130,13 +200,25 @@
     </div>
 {:else}
     {#each getProjectsPerType($activeType) as project}
-    <a href={`/review/${project.id}`}>
-        <div class="p-4 rounded-md border border-border bg-secondary">
+    {#if isClaimedBySomeoneElse(project)}
+        <div class="p-4 rounded-md border border-border bg-secondary opacity-50">
             <div class="font-bold text-primary-foreground">{project.projectName}</div>
             <div class="text-sm text-foreground/80">{project.description}</div>
             <div class="mt-2 text-xs text-foreground/70">type: {project.type} — journey {project.journeyNumber}</div>
+            <div class="mt-2 text-xs font-semibold text-foreground/80">{claimSummary(project)}</div>
         </div>
-    </a>
+    {:else}
+        <a href={`/review/${project.id}`}>
+            <div class="p-4 rounded-md border border-border bg-secondary">
+                <div class="font-bold text-primary-foreground">{project.projectName}</div>
+                <div class="text-sm text-foreground/80">{project.description}</div>
+                <div class="mt-2 text-xs text-foreground/70">type: {project.type} — journey {project.journeyNumber}</div>
+                {#if isClaimedByMe(project)}
+                    <div class="mt-2 text-xs font-semibold text-foreground/80">{claimSummary(project)}</div>
+                {/if}
+            </div>
+        </a>
+    {/if}
     {/each}
 {/if}
 </div>

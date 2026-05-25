@@ -14,13 +14,16 @@ export async function GET({ params, request }: { params: { id: string }, request
                 headers: { "Content-Type": "application/json; charset=utf-8" }
             });
         }
-        if (claimedSubmission.claimedBy !== slackId) {
-            return new Response(JSON.stringify({ error: "You do not have permission to view this submission" }), {
-                status: 403,
-                headers: { "Content-Type": "application/json; charset=utf-8" }
-            });
-        }
-        return new Response(JSON.stringify(claimedSubmission.claimedBy), {
+        const claimedAtMs = Date.parse(claimedSubmission.claimedAt || "");
+        const expiresAtMs = Number.isFinite(claimedAtMs) ? claimedAtMs + 30 * 60 * 1000 : 0;
+        return new Response(JSON.stringify({
+            claimedBy: claimedSubmission.claimedBy || "",
+            claimedAt: claimedSubmission.claimedAt || "",
+            remainingMs: Math.max(0, expiresAtMs - Date.now()),
+            slackId,
+            isMine: claimedSubmission.claimedBy === slackId,
+            expiresAt: expiresAtMs ? new Date(expiresAtMs).toISOString() : ""
+        }), {
             status: 200,
             headers: { "Content-Type": "application/json; charset=utf-8" }
         });
