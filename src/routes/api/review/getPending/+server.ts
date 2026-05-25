@@ -5,7 +5,7 @@ export async function GET() {
         const pendingSubmissions = await getPendingSubmissions();
 
         const projects = pendingSubmissions.map((s: any) => ({
-            id: String(s.id),
+            id: String(s.recordId),
             projectName: s["Hackatime Project name"] || "",
             description: s["Description"] || "",
             codeUrl: s["Code URL"] || "",

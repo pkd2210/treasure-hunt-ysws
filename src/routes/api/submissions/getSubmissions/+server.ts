@@ -14,7 +14,7 @@ export async function GET({ request }: { request: Request }) {
         return new Response("Submission not found", { status: 404 });
     }
     const filteredSubmission = {
-        [submission.id]: {
+        [submission.recordId]: {
             journeyNumber: submission.journeyNumber,
             "Hackatime Project name": submission["Hackatime Project name"],
             status: submission.status,

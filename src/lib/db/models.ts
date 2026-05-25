@@ -58,6 +58,7 @@ export type Journey = {
 }
 
 export type Submission = {
+    recordId: string;
     id: number;
     journeyNumber: number;
     "Hackatime Project name": string;
@@ -82,6 +83,7 @@ export type Submission = {
     "City": string;
     "ZIP / Postal Code": string;
     "Birthday": string;
+    "claimedBy": string;
 }
 
 export type Project = {

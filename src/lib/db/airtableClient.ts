@@ -1263,6 +1263,7 @@ function getFirstOrDefault(value: unknown): string {
 
 function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>): Submission {
     return {
+        recordId: record.id,
         id: record.get("id") as number,
         journeyNumber: record.get("journeyNumber") as number,
         "Hackatime Project name": record.get("Hackatime Project name") as string,
@@ -1287,6 +1288,7 @@ function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>):
         "City": getFirstOrDefault(record.get("City")),
         "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
         "Birthday": getFirstOrDefault(record.get("Birthday")),
+        "claimedBy": record.get("claimedBy") as string,
     };
 }
 
@@ -1347,5 +1349,96 @@ export async function getPendingSubmissions(): Promise<Submission[]> {
                 resolve(submissions);
             }
         );
+    });
+}
+
+function findSubmissionRecord(submissionId: string): Promise<AirtableRecord<AirtableFieldSet> | null> {
+    return new Promise((resolve, reject) => {
+        base("Submissions").find(submissionId, (findError, record) => {
+            if (record) {
+                resolve(record);
+                return;
+            }
+            const numericSubmissionId = Number(submissionId);
+            if (!Number.isFinite(numericSubmissionId)) {
+                if (findError) {
+                    reject(findError);
+                    return;
+                }
+                resolve(null);
+                return;
+            }
+
+            base("Submissions").select({
+                filterByFormula: `{id} = ${numericSubmissionId}`
+            }).firstPage((lookupError, records: ReadonlyArray<AirtableRecord<AirtableFieldSet>> = []) => {
+                if (lookupError) {
+                    reject(lookupError);
+                    return;
+                }
+                resolve(records[0] ?? null);
+            });
+        });
+    });
+}
+
+export async function claimSubmission(submissionId: string, adminSlackId: string): Promise<void> {
+    // claim the submission for 30 minutes, preventing other admins from reviewing it while it's being reviewed
+    return new Promise<void>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+            const claimedBy = record.get("claimedBy") as string | undefined;
+            if (claimedBy) {
+                reject(new Error("Submission is already claimed by another admin"));
+                return;
+            }
+            base("Submissions").update(record.id, { claimedBy: adminSlackId }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                resolve();
+            });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+export async function unclaimSubmission(submissionId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+            base("Submissions").update(record.id, { claimedBy: "" }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                resolve();
+            });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+export async function getClaimedSubmission(submissionId: string): Promise<Submission | null> {
+    return new Promise((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                resolve(null);
+                return;
+            }
+            const submission = submissionRecordToSubmission(record);
+            resolve(submission);
+        }).catch((error) => {
+            reject(error);
+        });
     });
 }
