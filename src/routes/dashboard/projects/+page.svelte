@@ -28,7 +28,7 @@
 
           const isLockedProject = (project) => {
             const status = normalizedStatus(project);
-            return status === 'UNREVIEWED' || status === 'APPROVED';
+            return status === 'UNREVIEWED' || status === 'APPROVED' || status === 'FRAUD-REVIEW' || (project?.submission && status !== 'REJECTED');
           };
 
 </script>

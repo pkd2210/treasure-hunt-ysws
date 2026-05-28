@@ -16,7 +16,7 @@ export async function GET({ request }: { request: Request }) {
     const filteredSubmission = {
         [submission.recordId]: {
             journeyNumber: submission.journeyNumber,
-            "Hackatime Project name": submission["Hackatime Project name"],
+            "hackatime project": submission["hackatime project"],
             status: submission.status,
             "Optional - Override Hours Spent": submission["Optional - Override Hours Spent"],
             "Optional - Override Hours Spent Justification": submission["Optional - Override Hours Spent Justification"],

@@ -5,7 +5,9 @@
         'UNSHIPPED': '#EC3750',
         'APPROVED': '#4CAF50',
         'INREVIEW': '#FF9800',
-        'NEED CHANGES': '#FF5722'
+        'FRAUD-REVIEW': '#FF9800',
+        'NEED CHANGES': '#FF5722',
+        'REJECTED': '#D32F2F'
     }[normalizedStatus()] || '#EC3750'); // Default to red if status is unknown
 
     const xIndex = () => (number - 1) % 3;
@@ -17,10 +19,10 @@
     const statusX = () => big ? 40 : 20;
     const editHref = () => `/dashboard/projects/edit/${number}`;
     const createHref = () => `/dashboard/projects/create/${number}`;
-
-    if (project?.description && project.description.length > 23) {
-        project.description = project.description.slice(0, 23) + '...';
-    }
+    const projectDescription = () => {
+        const description = project?.description || 'No description available';
+        return description.length > 23 ? `${description.slice(0, 23)}...` : description;
+    };
 </script>
 
 {#if create == true}
@@ -57,11 +59,14 @@
                  fill="#E8D5A0" stroke="#1B2D48" stroke-width="3" />
             </g>
            <text  font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48" text-anchor="middle" x={textX()} y="35">{project?.projectName || 'Unnamed Project'}</text>
-           <text font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="18" fill="#1B2D48" text-anchor="middle" x={textX()} y="75">{project?.description || 'No description available'}</text>
+           <text font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="18" fill="#1B2D48" text-anchor="middle" x={textX()} y="75">{projectDescription()}</text>
            <text font-family="'Luckiest Guy', cursive" font-size="14" fill="#1B2D48" opacity="0.7" text-anchor="middle" x={textX()} y="95">JOURNEY {project?.journeyNumber || 'Unknown'}</text>
 
            <!-- Status Label -->
         <text x={statusX()} y="145" font-family="monospace" font-weight="900" font-size="14" fill={projectStatusColor()}>{project?.status || 'UNSHIPPED'}</text>
+        {#if normalizedStatus() === 'REJECTED' && project?.rejectionReason}
+            <text x={statusX()} y="165" font-family="monospace" font-weight="700" font-size="11" fill="#1B2D48">{project.rejectionReason}</text>
+        {/if}
 
         </g>
     {:else}
@@ -73,11 +78,14 @@
                  fill="#E8D5A0" stroke="#1B2D48" stroke-width="3" />
             </g>
            <text  font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="16" fill="#1B2D48" text-anchor="middle" x={textX()} y="35">{project?.projectName || 'Unnamed Project'}</text>
-           <text font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="18" fill="#1B2D48" text-anchor="middle" x={textX()} y="75">{project?.description || 'No description available'}</text>
+           <text font-family="'Luckiest Guy', cursive" font-weight="bold" font-size="18" fill="#1B2D48" text-anchor="middle" x={textX()} y="75">{projectDescription()}</text>
            <text font-family="'Luckiest Guy', cursive" font-size="14" fill="#1B2D48" opacity="0.7" text-anchor="middle" x={textX()} y="95">JOURNEY {project?.journeyNumber || 'Unknown'}</text>
 
            <!-- Status Label -->
         <text x={statusX()} y="145" font-family="monospace" font-weight="900" font-size="14" fill={projectStatusColor()}>{project?.status || 'UNSHIPPED'}</text>
+        {#if normalizedStatus() === 'REJECTED' && project?.rejectionReason}
+            <text x={statusX()} y="165" font-family="monospace" font-weight="700" font-size="11" fill="#1B2D48">{project.rejectionReason}</text>
+        {/if}
 
         </g>
         </a>

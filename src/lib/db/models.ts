@@ -61,7 +61,7 @@ export type Submission = {
     recordId: string;
     id: number;
     journeyNumber: number;
-    "Hackatime Project name": string;
+    "hackatime project": string;
     status: "unreviewed" | "rejected" | "approved";
     "Optional - Override Hours Spent"?: number;
     "Optional - Override Hours Spent Justification"?: string;
@@ -85,6 +85,7 @@ export type Submission = {
     "Birthday": string;
     "claimedBy": string;
     "claimedAt": string;
+    "projectType": string;
 }
 
 export type Project = {
@@ -101,5 +102,7 @@ export type Project = {
     journeyNumber: number;
     status: "unreviewed" | "rejected" | "approved" | null;
     submission: string | null;
+    projectType: string;
+    rejectionReason?: string | null;
     yswsEligible: boolean;
 }

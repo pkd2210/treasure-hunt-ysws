@@ -3,14 +3,14 @@ import { clearCacheKey } from "$lib/server/projectsCache";
 
 export async function POST({ request }) {
     try {
-        const { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject } = await request.json();
+        const { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject, projectType } = await request.json();
         const slackId = await getSlackId(request);
 
         if (!slackId) {
             return new Response(JSON.stringify({ error: "User not authenticated" }), { status: 401 });
         }
 
-        const updatedProject = { projectName, description, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject };
+        const updatedProject = { projectName, description, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject, projectType };
         await updateProject(slackId, journeyNumber, updatedProject as any);
         
         clearCacheKey(`projects:${slackId}`);

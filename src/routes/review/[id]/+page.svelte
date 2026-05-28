@@ -137,6 +137,30 @@ const id = $page.params.id;
         hackatime: false,
         aiProportion: false
     };
+
+    let submittingDecision = $state(false);
+
+    const submitDecision = async (decision) => {
+      if (submittingDecision) return;
+      submittingDecision = true;
+      try {
+        const response = await fetch(`/api/review/${decision}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: id, reason: justification }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        window.location.href = "/review";
+      } catch (error) {
+        console.error(`Error submitting ${decision}:`, error);
+      } finally {
+        submittingDecision = false;
+      }
+    };
 </script>
 
 <form action="?/review" method="POST" style="width: 100%; max-width: 1000px; margin: 20px auto; filter: drop-shadow(10px 10px 0px rgba(27, 45, 72, 0.15)); position: relative;">
@@ -256,9 +280,8 @@ const id = $page.params.id;
 
     <foreignObject x="140" y="1290" width="700" height="80">
       <div style="display: flex; gap: 20px;">
-        <button type="submit" name="action" value="approve" style="flex: 1; height: 50px; background: #FFB400; border: 4px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; color: #1B2D48; transform: rotate(-1deg);">APPROVE</button>
-        <button type="submit" name="action" value="reject" style="flex: 1; height: 50px; background: #EC3750; border: 4px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; color: #F3E1AD; transform: rotate(1deg);">REJECT</button>
-        <button type="submit" name="action" value="fraud" style="flex: 1.5; height: 50px; background: #1B2D48; border: 4px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; color: #F3E1AD;">SEND TO FRAUD</button>
+        <button type="button" onclick={() => submitDecision("approve")} style="flex: 1; height: 50px; background: #FFB400; border: 4px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; color: #1B2D48; transform: rotate(-1deg);">{submittingDecision ? "SAVING..." : "APPROVE"}</button>
+        <button type="button" onclick={() => submitDecision("reject")} style="flex: 1; height: 50px; background: #EC3750; border: 4px solid #1B2D48; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-weight: 900; cursor: pointer; color: #F3E1AD; transform: rotate(1deg);">REJECT</button>
         <button type="button" aria-label="Chest" title="Chest" style="width: 50px; height: 50px; border: 4px solid #1B2D48; border-radius: 9999px; background: #E8D5A0 url('/assets/Chest%20-%20side.webp') center / 66px no-repeat; cursor: pointer; flex: 0 0 50px; transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;" onmouseenter={(event) => { event.currentTarget.style.transform = "translateY(-2px)"; event.currentTarget.style.boxShadow = "0 6px 0 #1B2D48"; event.currentTarget.style.filter = "brightness(1.05)"; }} onmouseleave={(event) => { event.currentTarget.style.transform = "translateY(0)"; event.currentTarget.style.boxShadow = "none"; event.currentTarget.style.filter = "none"; }}></button>
       </div>
     </foreignObject>

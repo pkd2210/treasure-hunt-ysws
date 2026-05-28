@@ -2,13 +2,27 @@ import AirtablePkg from "airtable";
 import type { AirtableFieldSet, AirtableRecord } from './airtable-types';
 const Airtable = AirtablePkg;
 import type { Item, Journey, Order, Reward, User, Submission, Project } from "./models";
-import { AIRTABLE_KEY, AIRTABLE_BASE_ID } from '$env/static/private';
+import { AIRTABLE_KEY, AIRTABLE_BASE_ID, FRAUD_API_KEY } from '$env/static/private';
 import { joinChannel, sendUpdateDM } from "$lib/server/slack/slackClient";
 import { completeJourney } from "$lib/rewards/complete";
+import { clearCache } from "$lib/server/projectsCache";
 import { get } from "node:http";
 import { send } from "node:process";
 const base = new Airtable({ apiKey: AIRTABLE_KEY }).base(AIRTABLE_BASE_ID);
 const CLAIM_DURATION_MS = 30 * 60 * 1000;
+const FRAUD_EVENT_ID = process.env.FRAUD_EVENT_ID || "treasure-hunt";
+
+function getFraudProjectUrl(): string {
+    return `https://joe.fraud.hackclub.com/api/v1/ysws/events/${FRAUD_EVENT_ID}/projects`;
+}
+
+function getFraudApiKey(): string {
+    return FRAUD_API_KEY;
+}
+
+function isFraudAuthFailure(status: number): boolean {
+    return status === 401 || status === 403;
+}
 
 // General get records
 async function getUserRecords(slackId?: string, request?: Request): Promise<AirtableRecord<AirtableFieldSet> | null> {
@@ -800,7 +814,7 @@ export async function sendProjectToReview(slackId: string, journeyNumber: number
                     fields: {
                         User: [userRecord.id],
                         journeyNumber,
-                        "Hackatime Project name": HackatimeProjectName,
+                        "hackatime project": HackatimeProjectName,
                         status: "unreviewed",
                         "Screenshot": [{ url: screenshotUrl }],
                         "Description": description,
@@ -861,6 +875,7 @@ export async function createProject(slackId: string, project: Project): Promise<
                         screenshot: project.screenshot,
                         aiUsage: project.aiUsage,
                         hackatimeProject: project.hackatimeProject,
+                        projectType: project.projectType,
                         journeyNumber: project.journeyNumber,
                     } as any
                 },
@@ -968,6 +983,8 @@ export async function getProjects(request?: Request, slackId?: string): Promise<
                     hackatimeProject: record.get("hackatimeProject") as string,
                     journeyNumber: record.get("journeyNumber") as number,
                     submission: record.get("submission") as string | null,
+                    projectType: record.get("projectType") as string,
+                    rejectionReason: record.get("rejectionReason") as string | null,
                     yswsEligible: false,
                 }));
                 resolve(projects);
@@ -1079,6 +1096,7 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 hackatimeProject: record.get("hackatimeProject") as string,
                 journeyNumber: record.get("journeyNumber") as number,
                 submission: record.get("submission") as string | null,
+                projectType: record.get("projectType") as string,
                 yswsEligible: false,
             };
             const rawYsws = record.get("yswsEligible");
@@ -1156,7 +1174,7 @@ export async function submitProjectForReview(slackId: string, projectId: string)
                 reject(new Error("Project code URL must be a GitHub repository URL before submission."));
                 return;
             }
-            sendProjectToReview(slackId, project.journeyNumber, project.projectName, project.screenshot, project.description, project.aiUsage || "", githubUsername, project.codeUrl, project.readmeUrl, project.demoUrl).then((submissionRecordId) => {
+            sendProjectToReview(slackId, project.journeyNumber, project.hackatimeProject, project.screenshot, project.description, project.aiUsage || "", githubUsername, project.codeUrl, project.readmeUrl, project.demoUrl).then((submissionRecordId) => {
                 base("Submissions").find(submissionRecordId, (subFetchErr, submissionRecord) => {
                     if (subFetchErr) {
                         console.error("Error fetching created submission record:", subFetchErr);
@@ -1263,11 +1281,16 @@ function getFirstOrDefault(value: unknown): string {
 }
 
 function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>): Submission {
+    const hackatimeProject =
+        (record.get("hackatime project") as string | undefined) ||
+        (record.get("Hackatime Project name") as string | undefined) ||
+        "";
+
     return {
         recordId: record.id,
         id: record.get("id") as number,
         journeyNumber: record.get("journeyNumber") as number,
-        "Hackatime Project name": record.get("Hackatime Project name") as string,
+        "hackatime project": hackatimeProject,
         status: record.get("status") as "unreviewed" | "rejected" | "approved",
         "Optional - Override Hours Spent": record.get("Optional - Override Hours Spent") as number | undefined,
         "Optional - Override Hours Spent Justification": record.get("Optional - Override Hours Spent Justification") as string | undefined,
@@ -1289,6 +1312,7 @@ function submissionRecordToSubmission(record: AirtableRecord<AirtableFieldSet>):
         "City": getFirstOrDefault(record.get("City")),
         "ZIP / Postal Code": getFirstOrDefault(record.get("ZIP / Postal Code")),
         "Birthday": getFirstOrDefault(record.get("Birthday")),
+        "projectType": record.get("projectType") as string,
         "claimedBy": record.get("claimedBy") as string,
         "claimedAt": getFirstOrDefault(record.get("claimedAt")),
     };
@@ -1358,6 +1382,8 @@ export async function getAllApprovedProjects(): Promise<Project[]> {
                     journeyNumber: record.get("journeyNumber") as number,
                     status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
                     submission: record.get("submission") as string | null,
+                    projectType: record.get("projectType") as string,
+                    rejectionReason: record.get("rejectionReason") as string | null,
                     yswsEligible: Boolean(record.get("yswsEligible")),
                 }));
                 resolve(projects);
@@ -1488,6 +1514,294 @@ export async function getClaimedSubmission(submissionId: string): Promise<Submis
             resolve(submission);
         }).catch((error) => {
             reject(error);
+        });
+    });
+}
+
+export async function sendToFruad(submissionId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+            const apiKey = getFraudApiKey();
+            if (!apiKey) {
+                reject(new Error("Fraud API key is missing"));
+                return;
+            }
+
+            const hackatimeProjectName =
+                (record.get("hackatime project") as string | undefined) ||
+                (record.get("Hackatime Project name") as string | undefined) ||
+                (record.get("hackatimeProject") as string | undefined) ||
+                "";
+
+            const request = new Request(getFraudProjectUrl(), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    "name": hackatimeProjectName,
+                    "codeLink": record.get("Code URL") as string,
+                    "demoLink": record.get("Playable URL") as string,
+                    "submitter": {
+                        "slackId": getFirstOrDefault(record.get("Slack ID")),
+                    },
+                    "hackatimeProjects": hackatimeProjectName ? [hackatimeProjectName] : [],
+                    "organizerPlatformId": record.id,
+                })
+            });
+
+            fetch(request)
+                .then(async (response) => {
+                    if (!response.ok) {
+                        reject(new Error(`Failed to send submission to fraud API: ${response.status} ${response.statusText}`));
+                        return;
+                    }
+                    resolve();
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+export async function approveSubmission(submissionId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+            base("Submissions").update(record.id, { status: "fraud-review" }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                sendToFruad(submissionId).then(resolve).catch(reject);
+            });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+export async function rejectSubmission(submissionId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+            base("Submissions").update(record.id, { status: "rejected" }, (updateError) => {
+                if (updateError) {
+                    reject(updateError);
+                    return;
+                }
+                resolve();
+            });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+export async function checkFraudStatus(submissionId: string): Promise<{ status: string; reason: string | null }> {
+    return new Promise<{ status: string; reason: string | null }>((resolve, reject) => {
+        findSubmissionRecord(submissionId).then((record) => {
+            if (!record) {
+                reject(new Error("Submission not found"));
+                return;
+            }
+
+            const submissionUserId = getFirstOrDefault(record.get("User"));
+            const submissionJourneyNumber = record.get("journeyNumber") as number | undefined;
+
+            if (!submissionUserId || !submissionJourneyNumber) {
+                resolve({ status: "pending", reason: null });
+                return;
+            }
+
+            const apiKey = getFraudApiKey();
+            if (!apiKey) {
+                resolve({ status: "pending", reason: null });
+                return;
+            }
+
+            const updateMatchedProject = (status: "approved" | "rejected", rejectionReason: string = "") => {
+                base("Projects").select({
+                    filterByFormula: `AND({user} = '${submissionUserId}', {journeyNumber} = ${submissionJourneyNumber})`
+                }).firstPage((projectErr, projectRecords) => {
+                    if (projectErr) {
+                        reject(projectErr);
+                        return;
+                    }
+
+                    const projectRecord = projectRecords?.[0];
+                    if (!projectRecord) {
+                        resolve({ status: "pending", reason: null });
+                        return;
+                    }
+
+                    const updater = status === "approved" ? approveProject : rejectProject;
+                    const args = status === "approved"
+                        ? [projectRecord.id]
+                        : [projectRecord.id, rejectionReason];
+
+                    (updater as (...parameters: any[]) => Promise<void>)(...args)
+                        .then(() => {
+                            clearCache();
+                            resolve({ status, reason: status === "rejected" ? rejectionReason : null });
+                        })
+                        .catch(reject);
+                });
+            };
+
+            const request = new Request(getFraudProjectUrl(), {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                },
+            });
+
+            fetch(request)
+                .then(async (response) => {
+                    if (!response.ok) {
+                        if (isFraudAuthFailure(response.status)) {
+                            resolve({ status: "pending", reason: null });
+                            return;
+                        }
+                        reject(new Error(`Failed to check fraud status: ${response.status} ${response.statusText}`));
+                        return;
+                    }
+                    const data = await response.json();
+                    const projects = Array.isArray(data?.projects) ? data.projects : [];
+                    const project = projects.find((item: any) => item.organizerPlatformId === record.id);
+                    if (!project) {
+                        resolve({ status: "pending", reason: null });
+                        return;
+                    }
+                    const outcomeStatus = project.outcome?.status || project.status || "pending";
+                    if (outcomeStatus === "approved") {
+                        updateMatchedProject("approved");
+                        return;
+                    }
+                    if (outcomeStatus === "rejected") {
+                        const rejectionReason = typeof project.outcome?.reason === "string" ? project.outcome.reason : "Your project was rejected.";
+                        updateMatchedProject("rejected", rejectionReason);
+                        return;
+                    }
+
+                    resolve({ status: String(outcomeStatus), reason: null });
+                })
+                .catch((error) => {
+                    resolve({ status: "pending", reason: null });
+                });
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+async function approveProject(projectId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        base("Projects").update(projectId, { status: "approved", rejectionReason: "" }, (updateError) => {
+            if (updateError) {
+                reject(updateError);
+                return;
+            }
+
+            base("Projects").find(projectId, (findError, record) => {
+                if (findError || !record) {
+                    reject(findError ?? new Error("Project not found"));
+                    return;
+                }
+
+                const linkedUsers = record.get("user") as string[] | undefined;
+                const userRecordId = Array.isArray(linkedUsers) ? linkedUsers[0] : undefined;
+                const journeyNumber = record.get("journeyNumber") as number | undefined;
+
+                if (!userRecordId || journeyNumber === undefined || !Number.isFinite(journeyNumber)) {
+                    resolve();
+                    return;
+                }
+
+                userRecordIdToSlackId(userRecordId)
+                    .then((slackId) => {
+                        if (!slackId) {
+                            return;
+                        }
+                        return completeJourney(slackId, journeyNumber);
+                    })
+                    .then(() => resolve())
+                    .catch(reject);
+            });
+        });
+    });
+}
+
+export async function updateProjectReviewOutcome(projectId: string, status: "approved" | "rejected", rejectionReason: string = ""): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        base("Projects").update(projectId, {
+            status,
+            rejectionReason: status === "rejected" ? rejectionReason : "",
+        }, (updateError) => {
+            if (updateError) {
+                reject(updateError);
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+async function rejectProject(projectId: string, rejectionReason: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        base("Projects").update(projectId, { status: "rejected", rejectionReason }, (updateError) => {
+            if (updateError) {
+                reject(updateError);
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+export async function getProjectById(projectId: string): Promise<Project | null> {
+    return new Promise((resolve, reject) => {
+        base("Projects").find(projectId, (error, record) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (!record) {
+                resolve(null);
+                return;
+            }
+            resolve({
+                id: record.id as string,
+                user: record.get("user") as string,
+                projectName: record.get("projectName") as string,
+                description: record.get("description") as string,
+                codeUrl: record.get("codeUrl") as string,
+                readmeUrl: record.get("readmeUrl") as string,
+                demoUrl: record.get("demoUrl") as string,
+                screenshot: record.get("screenshot") as string,
+                aiUsage: record.get("aiUsage") as string | null,
+                hackatimeProject: record.get("hackatimeProject") as string,
+                journeyNumber: record.get("journeyNumber") as number,
+                status: record.get("status") as "unreviewed" | "rejected" | "approved" | null,
+                submission: record.get("submission") as string | null,
+                projectType: record.get("projectType") as string,
+                rejectionReason: record.get("rejectionReason") as string | null,
+                yswsEligible: Boolean(record.get("yswsEligible")),
+            });
         });
     });
 }

@@ -21,7 +21,7 @@ const isCreateable = (journeyNum: number, projectsByJourney: Record<number, any[
 
 export async function POST({ request }) {
     try {
-        const { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject } = await request.json();
+        const { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject, projectType } = await request.json();
         const slackId = await getSlackId(request);
 
         // Get user's projects and check eligibility
@@ -42,7 +42,7 @@ export async function POST({ request }) {
             return new Response(JSON.stringify({ error: "Cannot create project for this journey" }), { status: 403 });
         }
 
-        const newProject = { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject };
+        const newProject = { projectName, description, journeyNumber, codeUrl, readmeUrl, demoUrl, screenshot, aiUsage, hackatimeProject, projectType };
         const projectId = await createProject(slackId, newProject as any);
         
         clearCacheKey(`projects:${slackId}`);
