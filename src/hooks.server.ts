@@ -55,7 +55,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         if (!slackId) {
             return new Response('Not loggedin', { status: 401 });
         }
-        if (event.url.pathname.startsWith('/api/admin/')) {
+        if (event.url.pathname.startsWith('/api/admin/') || event.url.pathname.startsWith('/api/debug/')) {
             if (!(await isAdmin(slackId))) {
                 return new Response('Unauthorized', { status: 401 });
             }
