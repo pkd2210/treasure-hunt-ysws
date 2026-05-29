@@ -576,50 +576,40 @@ export async function getItem(itemId?: string, itemName?: string): Promise<Item 
 // Order management functions
 export async function getOrders(request: Request): Promise<Record<string, Omit<Order, 'id'>>> {
     const slackId = await getSlackId(request);
+    if (!slackId) {
+        return {};
+    }
     return new Promise((resolve, reject) => {
-        base("Users").select({
+        const results: Record<string, Omit<Order, 'id'>> = {};
+        base("Orders").select({
             filterByFormula: `{slackId} = '${slackId}'`
-        }).firstPage((error, records) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (!records || records.length === 0) {
-                resolve({});
-                return;
-            }
-            const userRecordId = records[0].id;
-            const results: Record<string, Omit<Order, 'id'>> = {};
-            base("Orders").select({
-                filterByFormula: `{slackId} = '${userRecordId}'`
-            }).eachPage(
-                function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
-                    for (const record of records) {
-                        const id = record.get("id") as number;
-                        results[id] = {
-                            slackId: slackId || "",
-                            itemId: record.get("itemId") as string,
-                            amount: record.get("amount") as number,
-                            totalPrice: record.get("totalPrice") as number,
-                            address: record.get("address") as string,
-                            email: record.get("email") as string,
-                            phone: record.get("phone") as string,
-                            country: record.get("country") as string,
-                            isDayPrize: record.get("isDayPrize") as boolean,
-                            status: record.get("status") as "pending" | "shipped" | "delivered" | "cancelled",
-                        };
-                    }
-                    fetchNextPage();
-                },
-                function done(error: any) {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve(results);
-                    }
+        }).eachPage(
+            function page(records: ReadonlyArray<AirtableRecord<AirtableFieldSet>>, fetchNextPage: () => void) {
+                for (const record of records) {
+                    const id = record.get("id") as number;
+                    results[id] = {
+                        slackId,
+                        itemId: record.get("itemId") as string,
+                        amount: record.get("amount") as number,
+                        totalPrice: record.get("totalPrice") as number,
+                        address: record.get("address") as string,
+                        email: record.get("email") as string,
+                        phone: record.get("phone") as string,
+                        country: record.get("country") as string,
+                        isDayPrize: record.get("isDayPrize") as boolean,
+                        status: record.get("status") as "pending" | "shipped" | "delivered" | "cancelled",
+                    };
                 }
-            );
-        });
+                fetchNextPage();
+            },
+            function done(error: any) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
     });
 }
 
